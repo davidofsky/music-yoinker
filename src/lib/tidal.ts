@@ -101,11 +101,12 @@ class Tidal {
     })
 
     const albums: Album[] = [];
-
-       for (const i of result.data.included) {
+    if (result.data.included) {
+      for (const i of result.data.included) {
         const album = await this.GetAlbum(i.id); albums.push(album);
         await delay(200); // add a delay because the api is rate limited
       }
+    }
 
     return albums;
   } 
