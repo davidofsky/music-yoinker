@@ -1,0 +1,67 @@
+.Queue {
+  position: fixed;
+  bottom: 1em;
+  left: 1em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1em;
+  z-index: 5;
+  background: #1e1e1e;
+  border: 2px solid #333;
+  border-radius: .5em;
+  padding: .5em;
+  cursor: pointer;
+}
+
+.OpenQueueBackground {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  left:0; 
+  top:0;
+  margin: 0;
+  padding: 0;
+  z-index: 6;
+  background-color: #1e1e1e99;
+}
+
+.OpenQueueModal {
+  padding: 1.5em;
+  background: linear-gradient(145deg, #1e1e1e, #000000);
+  border-radius: .5em;
+  overflow: hidden;
+  border: 2px solid #333;
+  width: 40em;
+  max-width: 80vw;
+  max-height: 90vh;
+}
+
+.QueuedAlbumlist {
+  max-height: 50vh;
+  overflow-y: scroll;
+  overflow-x: visible;
+}
+
+.QueuedAlbum {
+  width: 100%;
+  padding: .2em;
+  margin-top: .2em;
+  margin-bottom: .2em;
+  background: linear-gradient(145deg, #1e1e1e, #000000);
+  border-radius: .5em;
+  overflow: hidden;
+  border: 2px solid #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  gap: 1em;
+  align-items: center;
+  padding-left: 1em;
+  padding-right: 1em;
+}

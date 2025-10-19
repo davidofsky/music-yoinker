@@ -1,0 +1,21 @@
+.SearchContainer {
+  display: flex;
+}
+
+.SearchBar {
+  padding: .5em;
+  padding-right: 1em;
+  padding-left: 1em;
+  border-radius: .5em;
+  border: 2px solid #333;
+  background: #1e1e1e;
+  color: #ddd;
+}
+
+.SearchButton {
+  padding: .6em;
+  margin: .5em;
+  background: #1e1e1e;
+  border-radius: .5em;
+  border: 2px solid #333;
+}

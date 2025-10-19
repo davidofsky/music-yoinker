@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "module": "esnext",  // Changed from commonjs
+    "lib": ["esnext"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "bundler",  // Changed from node
+    "noEmit": false,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@lib/*": ["./src/lib/*"]  // Fixed typo: was "lib*"
+    }
+  },
+  "include": [
+    "src/server.ts",
+    "src/lib/**/*"
+  ],
+  "exclude": ["node_modules", "src/app"]
+}

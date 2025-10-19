@@ -1,27 +1,45 @@
 {
-  "name": "tidal-browser",
-  "version": "0.1.0",
+  "name": "music yoinker",
+  "version": "0.0.1",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
-    "start": "next start",
+    "dev": "tsx src/server.ts",
+    "build:server": "esbuild src/server.ts --bundle --platform=node --format=esm --outfile=dist/server.js --packages=external",
+
+    "build:next": "next build",
+    "build": "npm run build:server && npm run build:next",
+    "start": "node dist/server.js",
     "lint": "eslint"
   },
   "dependencies": {
+    "axios": "^1.12.2",
+    "express": "^5.1.0",
+    "gsap": "^3.13.0",
+    "motion": "^12.23.24",
+    "next": "15.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.5.4"
+    "react-icons": "^5.5.0",
+    "typescript": "^5",
+    "tmp": "^0.2.5",
+    "uuid": "^13.0.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/express": "^5.0.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
+    "@types/react-icons": "^2.2.7",
+    "@types/tmp": "^0.2.6",
+    "@types/ws": "^8.18.1",
+    "esbuild": "^0.25.11",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
-    "@eslint/eslintrc": "^3"
+    "tailwindcss": "^4",
+    "tsx": "^4.20.6"
   }
 }
