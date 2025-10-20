@@ -7,12 +7,14 @@ import { broadcast } from './websocket';
 import { PegTheFile } from './pegger';
 
 class Downloader {
-  private static hifiSource = 'https://tidal.401658.xyz'
+  private static hifiSource = 0
   private static quality = 'LOSSLESS';
   private static queue: Album[] = []
   private static processing: boolean = false;
   private static maxRetries = 5;
   private static retryDelay = 2000; // 2 seconds between retries
+
+  private static hifiSources = () => {return (process.env.HIFI_INSTANCES || "").split(',')};
 
   public static GetQueue = () => {return this.queue}
 
@@ -78,6 +80,7 @@ class Downloader {
         return; 
       } catch (error) {
         lastError = error;
+        this.hifiSource = (this.hifiSource+1 >= this.hifiSources().length)? 0 : this.hifiSource + 1
         console.error(`Attempt ${attempt}/${this.maxRetries} failed for track ${track.title}:`, error);
         
         if (attempt < this.maxRetries) {
@@ -102,7 +105,8 @@ class Downloader {
     try {
       console.info(`Downloading track: ${track.title}`);
       
-      const result = await axios.get(`${this.hifiSource}/track`, {
+      console.info(`${this.hifiSources()[this.hifiSource]}/track`)
+      const result = await axios.get(`${this.hifiSources()[this.hifiSource]}/track`, {
         params: {
           id: track.id,
           quality: this.quality
