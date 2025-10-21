@@ -20,6 +20,7 @@ export const PegTheFile = async (
     });
     fs.writeFileSync(coverPath, response.data);
     tempFile = path.join(tmpdir(), `track-${Date.now()}.flac`);
+    console.warn(filePath, metadata)
     
     const metadataArgs = Object.entries(metadata)
       .map(([k, v]) => {

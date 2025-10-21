@@ -42,7 +42,7 @@ class Downloader {
       while (this.queue.length > 0) {
         const album = this.queue[0];
         if (!album) {
-          this.queue.shift(); // unexpected null, remove it
+          this.queue.shift();
           continue;
         }
 
@@ -54,14 +54,11 @@ class Downloader {
               await this.downloadTrackWithRetry(album, track);
             }
           }
-
           console.info(`Completed album: ${album.title}`);
         } catch (err) {
           console.error(`Error downloading album ${album.title}:`, err);
-          // Optionally: decide if you want to skip album or still shift it
         }
 
-        // Shift the queue **after all tracks are awaited**
         this.queue.shift();
         broadcast({ type: 'queue', message: JSON.stringify(this.queue) });
       }
@@ -127,7 +124,7 @@ class Downloader {
       
       fs.writeFileSync(filePath, response.data);
       
-      const version = info.version || "";
+      const version = info.version? ` (${info.version})` : "";
       const sanitizedTitle = this.sanitizeFilename(info.title);
       const fileName = `${info.volumeNumber}.${info.trackNumber} ${sanitizedTitle} ${version}.flac`.trim();
       
@@ -140,13 +137,12 @@ class Downloader {
       fs.mkdirSync(albumDir, { recursive: true });
       
       const tempFile = await PegTheFile(filePath, {
-        title: info.title,
+        title: info.title + version,
         artist: info.artist.name,
         date: album.releaseDate,
         album: album.title,
         album_artist: album.artists[0].name,
         isrc: info.isrc,
-        version: version,
         copyright: info.copyright,
         track: info.trackNumber,
         discNumber: info.volumeNumber,
