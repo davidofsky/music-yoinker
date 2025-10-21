@@ -11,7 +11,6 @@ export const PegTheFile = async (
 ): Promise<string> => {
   const coverPath = path.join(tmpdir(), `cover-${Date.now()}.jpg`);
   let tempFile: string | null = null;
-
   
   try {
     // Download cover image
@@ -23,7 +22,6 @@ export const PegTheFile = async (
     tempFile = path.join(tmpdir(), `track-${Date.now()}.flac`);
     
     const metadataArgs = Object.entries(metadata)
-      .filter(([_, v]) => v !== null && v !== undefined && v !== '')
       .map(([k, v]) => {
         const escaped = String(v).replace(/"/g, '\\"');
         return `-metadata ${k}="${escaped}"`;
@@ -49,7 +47,7 @@ export const PegTheFile = async (
     return tempFile;
     
   } finally {
-    const filesToClean = [filePath, filePath, coverPath].filter(f => f);
+    const filesToClean = [filePath, filePath, coverPath];
     
     for (const file of filesToClean) {
       try {
