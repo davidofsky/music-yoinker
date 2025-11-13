@@ -2,7 +2,7 @@ import express from 'express';
 import next from 'next';
 import { createServer } from 'http';
 import Downloader from './lib/downloader';
-import Hifi, { IncludeEnum } from './lib/hifi';
+import Hifi from './lib/hifi';
 import { initializeWebSocket } from './lib/websocket';
 
 const dev = process.env.NODE_ENV !== 'production';
