@@ -31,7 +31,7 @@ class Hifi {
       try {
         console.log(`[${operationName}] Attempt ${attempt + 1}/${totalAttempts} using source: ${currentSource}`);
         return await operation(currentSource);
-      } catch (error: any) {
+      } catch (error) {
         lastError = error;
         console.error(`[${operationName}] Failed with source ${currentSource}:`, error.message);
         
@@ -61,9 +61,9 @@ class Hifi {
 
       const albums: Album[] = [];
       if (result.data.albums?.items) {
-        result.data.albums.items.forEach((album: any) => {
+        result.data.albums.items.forEach((album) => {
           const tidalArtists = album.artists;
-          const artists: Artist[] = tidalArtists.map((t: any) => ({
+          const artists: Artist[] = tidalArtists.map((t) => ({
             id: t.id,
             name: t.name
           }));
@@ -100,7 +100,7 @@ class Hifi {
       const artworkId = result.data[0]?.cover;
       const tracks: Track[] = [];
       
-      result.data[1]?.items?.forEach((track: any) => {
+      result.data[1]?.items?.forEach((track) => {
         tracks.push(<Track>{
           id: track.item.id,
           title: track.item.title,
