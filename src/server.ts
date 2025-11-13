@@ -2,7 +2,7 @@ import express from 'express';
 import next from 'next';
 import { createServer } from 'http';
 import Downloader from './lib/downloader';
-import Tidal, { IncludeEnum } from './lib/tidal';
+import Hifi, { IncludeEnum } from './lib/hifi';
 import { initializeWebSocket } from './lib/websocket';
 
 const dev = process.env.NODE_ENV !== 'production';
@@ -23,11 +23,26 @@ app.prepare().then(() => {
     }
 
     try {
-      const result = await Tidal.Search(query, IncludeEnum.Albums);
+      const result = await Hifi.SearchAlbum(query);
       res.json(result);
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Search failed' });
+    }
+  });
+
+  serverApp.get('/api/album', async (req, res) => {
+    const id = req.query.id as string;
+    if (!id) {
+      return res.status(400).send("Parameter 'id' is required");
+    }
+
+    try {
+      const result = await Hifi.GetAlbumTracks(id);
+      res.json(result);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Retrieve failed' });
     }
   });
 

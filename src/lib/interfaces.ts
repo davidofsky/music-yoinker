@@ -4,7 +4,6 @@ export interface Album {
   releaseDate: string
   artwork: Artwork
   artists: Artist[]
-  tracks: Track[]
 }
 
 export interface Track {
@@ -12,6 +11,20 @@ export interface Track {
   title: string
   volumeNr: number
   trackNr: number
+  duration: number
+  popularity: number
+  bpm: number
+  key: string
+  isrc: string
+  keyScale: string
+  explicit: boolean
+  type: "album"|"single"
+  version: string
+  album?: string
+  artist: string
+  date: string
+  copyright: string
+  artwork: string
 }
 
 export interface Artist {
@@ -25,3 +38,4 @@ export interface Artwork {
   file: string
   thumbnail: string
 }
+
