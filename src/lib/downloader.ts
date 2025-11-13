@@ -2,25 +2,18 @@ import fs from 'fs';
 import tmp from 'tmp';
 import axios, { AxiosError } from "axios";
 import path from 'path';
-import { Album, Track } from "./interfaces";
+import { Track } from "./interfaces";
 import { broadcast } from './websocket';
 import { PegTheFile } from './pegger';
+import Hifi from './hifi'
 
 class Downloader {
-  private static hifiSource = 0
-  private static quality = 'LOSSLESS';
-  private static queue: Album[] = []
+  private static queue: Track[] = []
   private static processing: boolean = false;
-  private static maxRetries = 5;
-  private static retryDelay = 2000; // 2 seconds between retries
-
-  private static hifiSources = () => {return (process.env.HIFI_INSTANCES || "").split(',')};
-
   public static GetQueue = () => {return this.queue}
 
-  public static AddToQueue(a: Album) {
-    if (this.queue.some(album => album === a)) return;
-    this.queue.push(a);
+  public static AddToQueue(tracks: Track[]) {
+    this.queue.push(...tracks);
 
     broadcast({
       type: 'queue',
@@ -40,23 +33,16 @@ class Downloader {
 
     try {
       while (this.queue.length > 0) {
-        const album = this.queue[0];
-        if (!album) {
+        const track = this.queue[0];
+        if (!track) {
           this.queue.shift();
           continue;
         }
 
-        console.info(`Downloading album: ${album.title}`);
-
         try {
-          if (album.tracks?.length > 0) {
-            for (const track of album.tracks) {
-              await this.downloadTrackWithRetry(album, track);
-            }
-          }
-          console.info(`Completed album: ${album.title}`);
+          await this.downloadTrack(track);
         } catch (err) {
-          console.error(`Error downloading album ${album.title}:`, err);
+          console.error(`Error downloading track ${track.title}:`, err);
         }
 
         this.queue.shift();
@@ -67,53 +53,13 @@ class Downloader {
     }
   }
    
-
-  private static async downloadTrackWithRetry(album: Album, track: Track) {
-    let lastError: unknown;
-    
-    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
-      try {
-        await this.downloadTrack(album, track);
-        return; 
-      } catch (error) {
-        lastError = error;
-        this.hifiSource = (this.hifiSource+1 >= this.hifiSources().length)? 0 : this.hifiSource + 1
-        console.error(`Attempt ${attempt}/${this.maxRetries} failed for track ${track.title}:`, error);
-        
-        if (attempt < this.maxRetries) {
-          const delay = this.retryDelay * attempt; // exponential delay
-          console.info(`Retrying in ${delay}ms...`);
-          await this.sleep(delay);
-        }
-      }
-    }
-    
-    console.error(`Failed to download track ${track.title} after ${this.maxRetries} attempts`);
-    throw lastError;
-  }
-
-  private static sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  private static async downloadTrack(album: Album, track: Track) {
+  private static async downloadTrack(track: Track) {
     let tmpFile: tmp.FileResult | null = null;
     
     try {
       console.info(`Downloading track: ${track.title}`);
-      
-      console.info(`${this.hifiSources()[this.hifiSource]}/track`)
-      const result = await axios.get(`${this.hifiSources()[this.hifiSource]}/track`, {
-        params: {
-          id: track.id,
-          quality: this.quality
-        },
-        timeout: 30000
-      });
-      
-      const info = result.data[0];
-      const blobUrl = result.data[2].OriginalTrackUrl;
-      
+      const blobUrl = await Hifi.GetTrack(track.id);
+
       tmpFile = tmp.fileSync({ postfix: '.flac' });
       const filePath = tmpFile.name;
       
@@ -121,32 +67,41 @@ class Downloader {
         responseType: 'arraybuffer',
         timeout: 60000 // Longer timeout for actual download
       });
-      
+
       fs.writeFileSync(filePath, response.data);
+
+      let version = '';
+      if (track.version !== '') version = ` (${track.version})`
       
-      const version = info.version? ` (${info.version})` : "";
-      const sanitizedTitle = this.sanitizeFilename(info.title);
-      const fileName = `${info.volumeNumber}.${info.trackNumber} ${sanitizedTitle} ${version}.flac`.trim();
+      
+      const sanitizedTitle = this.sanitizeFilename(track.title);
+      const fileName = `${track.volumeNr}.${track.trackNr} ${sanitizedTitle} ${version}.flac`.trim();
       
       const albumDir = path.join(
         process.env.MUSIC_DIRECTORY || "", 
-        this.sanitizeFilename(album.artists[0].name), 
-        this.sanitizeFilename(album.title)
+        this.sanitizeFilename(track.artist), 
+        this.sanitizeFilename(track.album||track.title)
       );
       
       fs.mkdirSync(albumDir, { recursive: true });
       
+
       const tempFile = await PegTheFile(filePath, {
-        title: info.title + version,
-        artist: info.artist.name,
-        date: album.releaseDate,
-        album: album.title,
-        album_artist: album.artists[0].name,
-        isrc: info.isrc,
-        copyright: info.copyright,
-        track: info.trackNumber,
-        discNumber: info.volumeNumber,
-      }, album.artwork.file);
+        title: track.title + version,
+        artist: track.artist,
+        date: track.date,
+        album: track.album||"",
+        isrc: track.isrc,
+        copyright: track.copyright,
+        discNumber: track.volumeNr.toString(),
+        duration: track.duration.toString(),
+        popularity: track.popularity.toString(),
+        bpm: track.bpm.toString(),
+        key: track.key,
+        keyScale: track.keyScale,
+        explicit: track.explicit.toString(),
+        track: track.trackNr.toString(),
+      }, track.artwork);
 
       // Move file to correct destination
       const finalPath = path.join(albumDir, fileName);
@@ -156,7 +111,6 @@ class Downloader {
       console.info(`Completed track: ${track.title}`);
       
     } catch (e) {
-      console.error(`Error downloading track ${track.title}:`, e);
       if (e instanceof AxiosError) {
         console.error(e.response)
       }

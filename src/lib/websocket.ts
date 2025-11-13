@@ -11,8 +11,6 @@ export type Message = {
   message: string
 }
 
-
-
 class WsClient extends WebSocket {
   public id: string = ""
 }
