@@ -2,7 +2,7 @@ export interface Album {
   id: string
   title: string
   releaseDate: string
-  artwork: Artwork
+  artwork: string
   artists: Artist[]
 }
 
@@ -30,13 +30,8 @@ export interface Track {
 export interface Artist {
   id: string
   name: string
+  picture: string
   albums: Album[]
-}
-
-export interface Artwork {
-  id: string
-  file: string
-  thumbnail: string
 }
 
 export interface DisplayItem {

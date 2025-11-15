@@ -67,17 +67,12 @@ class Hifi {
             id: t.id,
             name: t.name
           }));
-          const artwork: Artwork = {
-            id: album.cover,
-            file: "https://resources.tidal.com/images/" + album.cover.replaceAll('-', '/') + "/640x640.jpg",
-            thumbnail: "https://resources.tidal.com/images/" + album.cover.replaceAll('-', '/') + "/160x160.jpg",
-          };
           albums.push(<Album>{
             id: album.id,
             title: album.title,
             releaseDate: album.releaseDate,
             artists,
-            artwork
+            artwork: "https://resources.tidal.com/images/" + album.cover.replaceAll('-', '/') + "/640x640.jpg"
           });
         });
       }
