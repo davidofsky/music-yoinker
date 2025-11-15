@@ -15,14 +15,15 @@ const SearchBar = (props: Props) => {
   const [_loading, setLoading ]= useContext(LoadingCtx)!;
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const search = async () => { 
+  const search = async () => {
     if (!searchRef.current) throw new Error ("No reference found to searchbar");
-    setLoading(true);
     const query = searchRef.current.value;
+    if (query.trim().length === 0) return;
+    setLoading(true);
 
     const result = await axios.get("/api/albums", {
       params: { query }
-    })
+    });
 
     const albums: Album[] = result.data;
     props.setAlbums(albums);
