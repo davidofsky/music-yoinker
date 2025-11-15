@@ -98,3 +98,15 @@ button {
   font-size: 1em;
   color: #aaa;
 }
+
+option {
+  border: 2px solid #000;
+  background: #333;
+  padding: 10px;
+  transition: 0.4s;
+}
+
+option:hover,
+option:focus {
+  background: #dddddd;
+}

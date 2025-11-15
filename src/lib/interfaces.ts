@@ -20,7 +20,7 @@ export interface Track {
   explicit: boolean
   type: "album"|"single"
   version: string
-  album?: string
+  album: string
   artist: string
   date: string
   copyright: string
@@ -39,3 +39,9 @@ export interface Artwork {
   thumbnail: string
 }
 
+export interface DisplayItem {
+  Type: "Album"|"Single"
+  Title: string
+  Artist: string
+  Tracks: Track[]
+}
