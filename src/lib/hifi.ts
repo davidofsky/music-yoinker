@@ -85,6 +85,25 @@ class Hifi {
     }, 'SearchAlbum');
   }
 
+  public static async SearchTrack(query: string) : Promise<Track[]> {
+    return this.retryWithSourceCycle(async (sourceUrl) => {
+      const result = await axios.get(`${sourceUrl}/search`, {
+        headers: {
+          "accept": "application/vnd.api+json",
+        },
+        params: {
+          "s": query
+        }
+      });
+
+      const tracks: Track[] = [];
+      result.data.items.forEach(track => {
+        this.parseTrack(track).then(t => {tracks.push(t)})
+      })
+      return tracks
+    }, 'SearchTrack');
+  }
+
   public static async GetAlbumTracks(id: string): Promise<Track[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/album`, {
@@ -96,37 +115,38 @@ class Hifi {
         }
       });
 
-      const releaseDate = result.data[0]?.releaseDate;
-      const artworkId = result.data[0]?.cover;
       const tracks: Track[] = [];
-      
-      result.data[1]?.items?.forEach((track) => {
-        tracks.push(<Track>{
-          id: track.item.id,
-          title: track.item.title,
-          volumeNr: track.item.volumeNumber,
-          trackNr: track.item.trackNumber,
-          duration: track.item.duration,
-          popularity: track.item.popularity,
-          bpm: track.item.bpm,
-          key: track.item.key,
-          keyScale: track.item.keyScale,
-          isrc: track.item.isrc,
-          explicit: track.item.explicit,
-          type: "album",
-          version: track.item.version || "",
-          album: track.item.album?.title,
-          artist: track.item.artist.name,
-          copyright: track.item.copyright,
-          date: releaseDate,
-          artwork: "https://resources.tidal.com/images/" + artworkId?.replaceAll('-', '/') + "/640x640.jpg",
-        });
+      result.data[1]?.items?.forEach(track => {
+        this.parseTrack(track.item).then(t=>tracks.push(t))
       });
 
       return tracks.sort((a, b) => {
         return a.volumeNr - b.volumeNr || a.trackNr - b.trackNr;
       });
     }, 'GetAlbumTracks');
+  }
+  
+  private static async parseTrack(track): Promise<Track> {
+    return{
+      id: track.id,
+      title: track.title,
+      volumeNr: track.volumeNumber,
+      trackNr: track.trackNumber,
+      duration: track.duration,
+      popularity: track.popularity,
+      bpm: track.bpm,
+      key: track.key,
+      keyScale: track.keyScale,
+      isrc: track.isrc,
+      explicit: track.explicit,
+      type: "album",
+      version: track.version || "",
+      album: track.album?.title,
+      artist: track.artist.name,
+      copyright: track.copyright,
+      date: track.streamStartDate.split("T")[0],
+      artwork: "https://resources.tidal.com/images/" + track.album.cover.replaceAll('-', '/') + "/640x640.jpg",
+    }
   }
 
   public static async GetTrack(id: string): Promise<string> {

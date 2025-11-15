@@ -1,14 +1,17 @@
 "use client"
-import { Album } from "@/lib/interfaces";
+import { Album, Track } from "@/lib/interfaces";
 import axios from "axios";
 import { useRef, Dispatch, SetStateAction, useContext } from "react";
 import {FaSearch} from 'react-icons/fa'
 import { LoadingCtx } from "@/app/context";
+import { BrowseMode } from "../Browser/Browser"
 
 import "./SearchBar.css"
 
 type Props = {
-  setAlbums: Dispatch<SetStateAction<Album[]>>
+  browseMode: BrowseMode,
+  setAlbums: Dispatch<SetStateAction<Album[]>>,
+  setTracks: Dispatch<SetStateAction<Track[]>>
 }
 
 const SearchBar = (props: Props) => {
@@ -20,12 +23,21 @@ const SearchBar = (props: Props) => {
     setLoading(true);
     const query = searchRef.current.value;
 
-    const result = await axios.get("/api/albums", {
+    let endpoint = "/api/albums";
+    if (props.browseMode === BrowseMode.Tracks) endpoint = "/api/tracks"
+    const result = await axios.get(endpoint, {
       params: { query }
     })
 
-    const albums: Album[] = result.data;
-    props.setAlbums(albums);
+
+    if (props.browseMode === BrowseMode.Albums) {
+      const albums: Album[] = result.data;
+      props.setAlbums(albums);
+    } else if (props.browseMode === BrowseMode.Tracks) {
+      const tracks: Track[] = result.data;
+      props.setTracks(tracks);
+    }
+
     setLoading(false);
   }
 

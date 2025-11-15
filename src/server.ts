@@ -31,6 +31,21 @@ app.prepare().then(() => {
     }
   });
 
+  serverApp.get('/api/tracks', async (req, res) => {
+    const query = req.query.query as string;
+    if (!query) {
+      return res.status(400).send("Parameter 'query' is required");
+    }
+
+    try {
+      const result = await Hifi.SearchTrack(query);
+      res.json(result);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Search failed' });
+    }
+  });
+
   serverApp.get('/api/album', async (req, res) => {
     const id = req.query.id as string;
     if (!id) {
