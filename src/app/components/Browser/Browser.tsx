@@ -10,7 +10,8 @@ import axios from "axios";
 
 export enum BrowseMode {
   Albums,
-  Tracks
+  Tracks,
+  Artists
 }
 
 const Browser = () => {
@@ -24,7 +25,7 @@ const Browser = () => {
 
   const AlbumToCI = (album: Album) : ChromaItem => {
     return {
-      image: album.artwork.file,
+      image: album.artwork,
       subtitle: album.artists[0].name,
       title: album.title,
       borderColor: "#aaa",
@@ -80,6 +81,8 @@ const Browser = () => {
               setBrowseMode(BrowseMode.Albums)
             } else if (e.currentTarget.value==="singles") {
               setBrowseMode(BrowseMode.Tracks)
+            } else if (e.currentTarget.value==="artists") {
+              setBrowseMode(BrowseMode.Artists)
             }
           }}>
             <option value="albums">
@@ -87,6 +90,9 @@ const Browser = () => {
             </option>
             <option value="singles">
               <span>Singles</span>
+            </option>
+            <option value="artists">
+              <span>Artists</span>
             </option>
           </select>
         </p>
