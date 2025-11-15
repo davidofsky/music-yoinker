@@ -53,7 +53,8 @@ export const PegTheFile = async (
     for (const file of filesToClean) {
       try {
         if (file && fs.existsSync(file)) {
-          fs.unlinkSync(file);
+          console.info("Removing file: " + file)
+          fs.rmSync(file)
         }
       } catch (err) {
         console.error(`Failed to clean up ${file}:`, err);

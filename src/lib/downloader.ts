@@ -103,10 +103,13 @@ class Downloader {
         track: track.trackNr.toString(),
       }, track.artwork);
 
+
       // Move file to correct destination
       const finalPath = path.join(albumDir, fileName);
       fs.mkdirSync(path.dirname(finalPath), { recursive: true });
       fs.copyFileSync(tempFile, finalPath);
+      console.info("Removing file: " + tempFile);
+      fs.rmSync(tempFile);
       
       console.info(`Completed track: ${track.title}`);
       
