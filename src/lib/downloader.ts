@@ -52,18 +52,18 @@ class Downloader {
       this.processing = false;
     }
   }
-   
+
   private static async downloadTrack(track: Track) {
     let tmpFile: tmp.FileResult | null = null;
-    
+
     try {
       console.info(`Downloading track: ${track.title}`);
       const blobUrl = await Hifi.GetTrack(track.id);
 
       tmpFile = tmp.fileSync({ postfix: '.flac' });
       const filePath = tmpFile.name;
-      
-      const response = await axios.get(blobUrl, { 
+
+      const response = await axios.get(blobUrl, {
         responseType: 'arraybuffer',
         timeout: 60000 // Longer timeout for actual download
       });
@@ -72,25 +72,23 @@ class Downloader {
 
       let version = '';
       if (track.version !== '') version = ` (${track.version})`
-      
-      
+
       const sanitizedTitle = this.sanitizeFilename(track.title);
       const fileName = `${track.volumeNr}.${track.trackNr} ${sanitizedTitle} ${version}.flac`.trim();
-      
+
       const albumDir = path.join(
-        process.env.MUSIC_DIRECTORY || "", 
-        this.sanitizeFilename(track.artist), 
+        process.env.MUSIC_DIRECTORY || "",
+        this.sanitizeFilename(track.artist),
         this.sanitizeFilename(track.album||track.title)
       );
-      
+
       fs.mkdirSync(albumDir, { recursive: true });
-      
 
       const tempFile = await PegTheFile(filePath, {
         title: track.title + version,
         artist: track.artist,
         date: track.date,
-        album: track.album||"",
+        album: track.album || "",
         isrc: track.isrc,
         copyright: track.copyright,
         discNumber: track.volumeNr.toString(),
@@ -110,9 +108,8 @@ class Downloader {
       fs.copyFileSync(tempFile, finalPath);
       console.info("Removing file: " + tempFile);
       fs.rmSync(tempFile);
-      
+
       console.info(`Completed track: ${track.title}`);
-      
     } catch (e) {
       if (e instanceof AxiosError) {
         console.error(e.response)
