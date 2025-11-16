@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Album, Artist, Artwork, Track } from './interfaces';
+import { Album, Artist, Track } from './interfaces';
 
 class Hifi {
   private static hifiSource = 0;
@@ -62,18 +62,9 @@ class Hifi {
       const albums: Album[] = [];
       if (result.data.albums?.items) {
         result.data.albums.items.forEach((album) => {
-          const tidalArtists = album.artists;
-          const artists: Artist[] = tidalArtists.map((t) => ({
-            id: t.id,
-            name: t.name
-          }));
-          albums.push(<Album>{
-            id: album.id,
-            title: album.title,
-            releaseDate: album.releaseDate,
-            artists,
-            artwork: "https://resources.tidal.com/images/" + album.cover.replaceAll('-', '/') + "/640x640.jpg"
-          });
+          this.parseAlbum(album).then(a => {
+            albums.push(a)
+          })
         });
       }
       return albums;
@@ -99,6 +90,21 @@ class Hifi {
     }, 'SearchTrack');
   }
 
+  public static async GetAlbum(id: string): Promise<Album> {
+    return this.retryWithSourceCycle(async (sourceUrl) => {
+      const result = await axios.get(`${sourceUrl}/album`, {
+        headers: {
+          "accept": "application/vnd.api+json",
+        },
+        params: {
+          "id": id
+        }
+      });
+
+      return await this.parseAlbum(result.data[0])
+    }, 'SearchAlbum');
+  }
+
   public static async GetAlbumTracks(id: string): Promise<Track[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/album`, {
@@ -121,8 +127,23 @@ class Hifi {
     }, 'GetAlbumTracks');
   }
   
+  private static async parseAlbum(album): Promise<Album> {
+    const tidalArtists = album.artists;
+    const artists: Artist[] = tidalArtists.map((t) => ({
+      id: t.id,
+      name: t.name
+    }));
+    return (<Album>{
+      id: album.id,
+      title: album.title,
+      releaseDate: album.releaseDate,
+      artists,
+      artwork: "https://resources.tidal.com/images/" + album.cover.replaceAll('-', '/') + "/640x640.jpg"
+    });
+  }
+
   private static async parseTrack(track): Promise<Track> {
-    return{
+    return (<Track>{
       id: track.id,
       title: track.title,
       volumeNr: track.volumeNumber,
@@ -136,12 +157,12 @@ class Hifi {
       explicit: track.explicit,
       type: "album",
       version: track.version || "",
-      album: track.album?.title,
+      album: track.album.title,
+      album_id: track.album.id,
       artist: track.artist.name,
       copyright: track.copyright,
-      date: track.streamStartDate.split("T")[0],
       artwork: "https://resources.tidal.com/images/" + track.album.cover.replaceAll('-', '/') + "/640x640.jpg",
-    }
+    })
   }
 
   public static async GetTrack(id: string): Promise<string> {

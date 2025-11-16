@@ -21,8 +21,8 @@ export interface Track {
   type: "album"|"single"
   version: string
   album: string
+  album_id: string
   artist: string
-  date: string
   copyright: string
   artwork: string
 }
