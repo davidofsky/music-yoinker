@@ -3,6 +3,7 @@ WORKDIR /app
 
 COPY package*.json ./
 RUN npm ci
+RUN apk add --no-cache ffmpeg
 
 COPY . .
 RUN npm run build
@@ -15,6 +16,7 @@ ENV NODE_ENV=production
 
 COPY package*.json ./
 RUN npm ci --only=production
+RUN apk add --no-cache ffmpeg
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/.next ./.next
