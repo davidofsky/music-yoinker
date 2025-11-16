@@ -63,10 +63,17 @@ class Downloader {
       tmpFile = tmp.fileSync({ postfix: '.flac' });
       const filePath = tmpFile.name;
 
+      console.debug('retrieving album data')
+      const album = Hifi.GetAlbum(track.album_id).then((e) => {
+        console.debug('retrieved album');
+        return e;
+      });
+
+      console.debug('retrieving blob')
       const response = await axios.get(blobUrl, {
         responseType: 'arraybuffer',
         timeout: 60000 // Longer timeout for actual download
-      });
+      }).then((e) => {console.debug('retrieved blob'); return e;});
 
       fs.writeFileSync(filePath, response.data);
 
@@ -87,7 +94,7 @@ class Downloader {
       const tempFile = await PegTheFile(filePath, {
         title: track.title + version,
         artist: track.artist,
-        date: track.date,
+        date: (await album).releaseDate,
         album: track.album || "",
         isrc: track.isrc,
         copyright: track.copyright,
