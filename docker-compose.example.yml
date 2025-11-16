@@ -1,10 +1,11 @@
-yoinker:
-  container_name: music-yoinker
-  build: .
-  ports:
-    - 3000:3000
-  restart: unless-stopped
-  env_file:
-    - .env
-  volumes:
-    - ./music:/app/music:rw
+services:
+  yoinker:
+    container_name: music-yoinker
+    build: .
+    ports:
+      - ${FRONTEND_PORT}:${BACKEND_PORT}
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ${HOST_MUSIC_DIRECTORY}:${MUSIC_DIRECTORY}:rw
