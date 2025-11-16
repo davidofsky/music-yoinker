@@ -18,16 +18,17 @@ const SearchBar = (props: Props) => {
   const [_loading, setLoading ]= useContext(LoadingCtx)!;
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const search = async () => { 
+  const search = async () => {
     if (!searchRef.current) throw new Error ("No reference found to searchbar");
-    setLoading(true);
     const query = searchRef.current.value;
+    if (query.trim().length === 0) return;
+    setLoading(true);
 
     let endpoint = "/api/albums";
     if (props.browseMode === BrowseMode.Tracks) endpoint = "/api/tracks"
     const result = await axios.get(endpoint, {
       params: { query }
-    })
+    });
 
 
     if (props.browseMode === BrowseMode.Albums) {

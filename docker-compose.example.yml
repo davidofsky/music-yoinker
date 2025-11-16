@@ -1,0 +1,10 @@
+yoinker:
+  container_name: music-yoinker
+  build: .
+  ports:
+    - 3000:3000
+  restart: unless-stopped
+  env_file:
+    - .env
+  volumes:
+    - ./music:/app/music:rw
