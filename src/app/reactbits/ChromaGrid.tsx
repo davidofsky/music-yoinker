@@ -110,7 +110,6 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
     >
       {data.map((c, i) => (
         <motion.article
-          whileHover={{scale: 1.1, zIndex: 2}}
           key={i}
           className="chroma-card"
           onMouseMove={handleCardMove}
@@ -119,7 +118,7 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
             {
               '--card-border': c.borderColor || 'transparent',
               '--card-gradient': c.gradient,
-              cursor: 'pointer'
+              cursor: 'pointer',
             } as React.CSSProperties
           }
         >

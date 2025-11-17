@@ -89,6 +89,29 @@ class Hifi {
       return albums;
     }, 'SearchAlbum', 'search');
   }
+  public static async searchArtist(query: string) : Promise<Artist[]> {
+    return this.retryWithSourceCycle(async (sourceUrl) => {
+      const result = await axios.get(`${sourceUrl}/search`, {
+        headers: {
+          "accept": "application/vnd.api+json",
+        },
+        params: {
+          "a": query
+        }
+      });
+
+      const artists: Artist[] = [];
+      result.data[0].artists.items.forEach(artist => {
+        const picture = artist.picture ? "https://resources.tidal.com/images/" + artist.picture.replaceAll('-', '/') + "/750x750.jpg" : "/david.jpeg"
+        artists.push({
+          id: artist.id,
+          name: artist.name,
+          picture
+        })
+      })
+      return artists
+    }, 'SearchArtist', 'search');
+  }
 
   public static async searchTrack(query: string): Promise<Track[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
@@ -137,6 +160,28 @@ class Hifi {
     }, 'DownloadAlbum', 'download');
   }
 
+  public static async searchArtistAlbums(id: string) : Promise<Album[]> {
+    return this.retryWithSourceCycle(async (sourceUrl) => {
+      console.debug(id)
+      const result = await axios.get(`${sourceUrl}/artist`, {
+        headers: {
+          "accept": "application/vnd.api+json",
+        },
+        params: {
+          "f": id
+        }
+      });
+
+      const data = result.data[0].rows[0].modules.find(m=>m.type==="ALBUM_LIST")
+      const albums: Album[] = [];
+      data.pagedList.items.forEach(album => {
+        this.parseAlbum(album).then(a => albums.push(a))
+      })
+
+      return albums;
+    }, 'SearchArtistAlbums', 'search');
+  }
+
   public static async searchAlbumTracks(id: string): Promise<Track[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/album`, {
@@ -159,6 +204,7 @@ class Hifi {
     }, 'SearchAlbumTracks', 'search');
   }
 
+
   private static async parseAlbum(album): Promise<Album> {
     const tidalArtists = album.artists;
     const artists: Artist[] = tidalArtists.map((t) => ({
@@ -170,7 +216,8 @@ class Hifi {
       title: album.title,
       releaseDate: album.releaseDate,
       artists,
-      artwork: "https://resources.tidal.com/images/" + album.cover.replaceAll('-', '/') + "/640x640.jpg"
+      artwork: "https://resources.tidal.com/images/" + album.cover.replaceAll('-', '/') + "/640x640.jpg",
+      color: album.vibrantColor
     });
   }
 
@@ -193,9 +240,10 @@ class Hifi {
       album_id: track.album.id,
       artist: track.artist.name,
       copyright: track.copyright,
-      artwork: "https://resources.tidal.com/images/" + track.album.cover.replaceAll('-', '/') + "/640x640.jpg",
+      artwork: "https://resources.tidal.com/images/" + track.album.cover.replaceAll('-', '/') + "/640x640.jpg"
     });
   }
+
 }
 
 export default Hifi;
