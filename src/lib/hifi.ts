@@ -2,15 +2,25 @@ import axios from 'axios';
 import { Album, Artist, Track } from './interfaces';
 
 class Hifi {
-  private static hifiSource = 0;
-  private static maxRetries = 5;
+  private static maxRetries = 3;
   private static retryDelay = 2000; // 2 seconds between retries
 
+  /**
+   * SEARCH_SOURCES:
+   *  - Way faster
+   *  - Only suitable for searching
+   * DOWNLOAD_SOURCES:
+   *  - More reliable
+   * - Suitable for both searching and downloading
+   */
   private static getHifiSources(type: 'search' | 'download'): string[] {
+    const searchSources = (process.env.SEARCH_SOURCES || "").split(',');
+    const downloadSources = (process.env.DOWNLOAD_SOURCES || "").split(',');
+
     if (type === 'search') {
-      return (process.env.SEARCH_SOURCES || "").split(',');
+      return searchSources.concat(downloadSources);
     } else if (type === 'download') {
-      return (process.env.DOWNLOAD_SOURCES || "").split(',');
+      return downloadSources;
     } else {
       return [];
     }
@@ -20,9 +30,8 @@ class Hifi {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  private static getNextSource(sources: string[]): number {
-    this.hifiSource = (this.hifiSource + 1) % sources.length;
-    return this.hifiSource;
+  private static getNextSource(sources: string[], hifiSource: number): number {
+    return (hifiSource + 1) % sources.length;
   }
 
   private static async retryWithSourceCycle<T>(
@@ -31,11 +40,12 @@ class Hifi {
     sourceType: 'search' | 'download'
   ): Promise<T> {
     const sources = this.getHifiSources(sourceType);
-    const totalAttempts = Math.min(this.maxRetries, sources.length);
+    const totalAttempts = sources.length * this.maxRetries;
     let lastError: Error | null = null;
+    let hifiSource = 0;
 
     for (let attempt = 0; attempt < totalAttempts; attempt++) {
-      const currentSource = sources[this.hifiSource];
+      const currentSource = sources[hifiSource];
 
       try {
         console.log(`[${operationName}] Attempt ${attempt + 1}/${totalAttempts} using source: ${currentSource}`);
@@ -45,7 +55,7 @@ class Hifi {
         console.error(`[${operationName}] Failed with source ${currentSource}:`, (error as Error)?.message);
 
         // Move to next source
-        this.getNextSource(sources);
+        hifiSource = this.getNextSource(sources, hifiSource);
 
         // Sleep before retry (except on last attempt)
         if (attempt < totalAttempts - 1) {
