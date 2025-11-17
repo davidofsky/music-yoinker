@@ -27,7 +27,7 @@ const Browser = () => {
     return {
       image: album.artwork,
       subtitle: album.artists[0].name,
-      title: album.title,
+      title: `${album.title} (${album.releaseDate.split("-")[0]})`,
       borderColor: "#aaa",
       gradient: "linear-gradient(145deg, #1f1f1f, #000000)",
       onClick: (async () => {
@@ -36,13 +36,14 @@ const Browser = () => {
           params: { id: album.id }
         })
         setLoading(false)
-        
+
         setOpenAlbum({
           Title: album.title,
           Artist: album.artists[0].name,
           Type: "Album",
-          Tracks: result.data
-        })
+          Tracks: result.data,
+          ReleaseDate: album.releaseDate
+        });
       })
     }
   }
@@ -60,7 +61,7 @@ const Browser = () => {
           Artist: track.artist,
           Type: "Single",
           Tracks: [track]
-        })
+        });
       })
     }
   }
@@ -72,7 +73,7 @@ const Browser = () => {
           Music Yoinker
         </h1>
 
-        <SearchBar browseMode={browseMode} setAlbums={setAlbums} setTracks={setTracks} /> 
+        <SearchBar browseMode={browseMode} setAlbums={setAlbums} setTracks={setTracks} />
         <br/>
         <p>
           <label>Browse </label>
@@ -100,7 +101,7 @@ const Browser = () => {
         {(browseMode === BrowseMode.Albums) &&
           <div>
             <br/>
-            <ChromaGrid 
+            <ChromaGrid
               items={albums.map(AlbumToCI)}
               damping={0.45}
               fadeOut={0.6}
@@ -112,7 +113,7 @@ const Browser = () => {
         {(browseMode === BrowseMode.Tracks) &&
           <div>
             <br/>
-            <ChromaGrid 
+            <ChromaGrid
               items={tracks.map(TrackToCI)}
               damping={0.45}
               fadeOut={0.6}
