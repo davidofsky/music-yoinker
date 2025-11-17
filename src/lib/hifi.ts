@@ -11,7 +11,7 @@ class Hifi {
    *  - Only suitable for searching
    * DOWNLOAD_SOURCES:
    *  - More reliable
-   * - Suitable for both searching and downloading
+   *  - Suitable for both searching and downloading
    */
   private static getHifiSources(type: 'search' | 'download'): string[] {
     const searchSources = (process.env.SEARCH_SOURCES || "").split(',');
