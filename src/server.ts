@@ -23,7 +23,7 @@ app.prepare().then(() => {
     }
 
     try {
-      const result = await Hifi.SearchAlbum(query);
+      const result = await Hifi.searchAlbum(query);
       res.json(result);
     } catch (err) {
       console.error(err);
@@ -38,7 +38,7 @@ app.prepare().then(() => {
     }
 
     try {
-      const result = await Hifi.SearchTrack(query);
+      const result = await Hifi.searchTrack(query);
       res.json(result);
     } catch (err) {
       console.error(err);
@@ -53,7 +53,7 @@ app.prepare().then(() => {
     }
 
     try {
-      const result = await Hifi.GetAlbumTracks(id);
+      const result = await Hifi.searchAlbumTracks(id);
       res.json(result);
     } catch (err) {
       console.error(err);
