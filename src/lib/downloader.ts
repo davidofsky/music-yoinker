@@ -82,7 +82,7 @@ class Downloader {
     try {
       console.info(`Downloading track: ${track.title}`);
       const blobUrl = await Hifi.downloadTrack(track.id);
-      const album = await this.getAlbumById(track.album_id);
+      const album = this.getAlbumById(track.album_id).then((e) => { return e; });
 
       tmpFile = tmp.fileSync({ postfix: '.flac' });
       const filePath = tmpFile.name;
@@ -112,7 +112,7 @@ class Downloader {
       const tempFile = await PegTheFile(filePath, {
         title: track.title + version,
         artist: track.artist,
-        date: album.releaseDate,
+        date: (await album).releaseDate,
         album: track.album || "",
         isrc: track.isrc,
         copyright: track.copyright,
