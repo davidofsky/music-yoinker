@@ -17,13 +17,13 @@ const AlbumViewer = () => {
 
   return (
     <AnimatePresence>
-    {openAlbum && 
+    {openAlbum &&
       <div className="ModalBackground" onClick={closeAction}>
-        <motion.div 
+        <motion.div
           className="Modal"
-          initial={{ opacity: 0, scale:.8 }} 
-          animate={{ 
-            opacity: 1, 
+          initial={{ opacity: 0, scale:.8 }}
+          animate={{
+            opacity: 1,
             scale: 1,
             transition: {
               default: {type: "tween"},
@@ -33,7 +33,7 @@ const AlbumViewer = () => {
           exit=   {{ opacity: 0, scale:.8}}
           onClick={(e) => e.stopPropagation()}
         >
-        <h1 className="ModalTitle">{openAlbum.Title}</h1>
+        <h1 className="ModalTitle">{openAlbum.Title} ({openAlbum.ReleaseDate?.split("-")[0]})</h1>
         <h1 className="ModalSubTitle">{openAlbum.Artist}</h1>
           <h1>Tracks</h1>
 
@@ -47,13 +47,13 @@ const AlbumViewer = () => {
 
           <br/>
           <div className="ModalFooter">
-            <button 
+            <button
               className="HoverButtonRed"
               onClick={closeAction}>
               <FaXmark/>
               Close page
             </button>
-            <button 
+            <button
               className="HoverButtonGreen"
               onClick={() => {
                 downloadAlbum();

@@ -39,4 +39,5 @@ export interface DisplayItem {
   Title: string
   Artist: string
   Tracks: Track[]
+  ReleaseDate?: string
 }
