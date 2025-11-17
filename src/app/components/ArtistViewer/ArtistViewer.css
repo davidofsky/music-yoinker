@@ -1,0 +1,5 @@
+.AlbumList {
+  max-height: 50vh;
+  overflow-y: scroll;
+  overflow-x: visible;
+}

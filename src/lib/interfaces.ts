@@ -4,6 +4,7 @@ export interface Album {
   releaseDate: string
   artwork: string
   artists: Artist[]
+  color: string
 }
 
 export interface Track {
@@ -31,7 +32,6 @@ export interface Artist {
   id: string
   name: string
   picture: string
-  albums: Album[]
 }
 
 export interface DisplayItem {
