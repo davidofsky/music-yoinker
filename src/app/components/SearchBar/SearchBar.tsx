@@ -1,7 +1,7 @@
 "use client"
 import { Album, Track } from "@/lib/interfaces";
 import axios from "axios";
-import { useRef, Dispatch, SetStateAction, useContext } from "react";
+import { useRef, Dispatch, SetStateAction, useContext, useEffect } from "react";
 import {FaSearch} from 'react-icons/fa'
 import { LoadingCtx } from "@/app/context";
 import { BrowseMode } from "../Browser/Browser"
@@ -17,6 +17,7 @@ type Props = {
 const SearchBar = (props: Props) => {
   const [_loading, setLoading ]= useContext(LoadingCtx)!;
   const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { searchRef.current?.focus(); }, []);
 
   const search = async () => {
     if (!searchRef.current) throw new Error ("No reference found to searchbar");

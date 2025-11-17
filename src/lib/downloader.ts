@@ -2,12 +2,14 @@ import fs from 'fs';
 import tmp from 'tmp';
 import axios, { AxiosError } from "axios";
 import path from 'path';
-import { Track } from "./interfaces";
+import { Album, Track } from "./interfaces";
 import { broadcast } from './websocket';
 import { PegTheFile } from './pegger';
 import Hifi from './hifi'
 
 class Downloader {
+  private static readonly MAX_MEMORIZED_ALBUMS = 5;
+  private static albums: Album[] = [];
   private static queue: Track[] = []
   private static processing: boolean = false;
   public static GetQueue = () => {return this.queue}
@@ -53,21 +55,37 @@ class Downloader {
     }
   }
 
+  private static async getAlbumById(albumId: string) {
+    let album = this.albums.find(a => a.id === albumId);
+    if (album) return album;
+
+    try {
+      console.info(`Fetching album with ID: ${albumId}`);
+      album = await Hifi.downloadAlbum(albumId);
+      console.info(`Fetched album metadata: ${album.title}`);
+
+      this.albums.push(album);
+      if (this.albums.length > this.MAX_MEMORIZED_ALBUMS) {
+        this.albums.shift();
+      }
+
+      return album;
+    } catch (e) {
+      console.error(`Error fetching album with ID ${albumId}:`, e);
+      throw e;
+    }
+  }
+
   private static async downloadTrack(track: Track) {
     let tmpFile: tmp.FileResult | null = null;
 
     try {
       console.info(`Downloading track: ${track.title}`);
-      const blobUrl = await Hifi.GetTrack(track.id);
+      const blobUrl = await Hifi.downloadTrack(track.id);
+      const album = this.getAlbumById(track.album_id).then((e) => { return e; });
 
       tmpFile = tmp.fileSync({ postfix: '.flac' });
       const filePath = tmpFile.name;
-
-      console.debug('retrieving album data')
-      const album = Hifi.GetAlbum(track.album_id).then((e) => {
-        console.debug('retrieved album');
-        return e;
-      });
 
       console.debug('retrieving blob')
       const response = await axios.get(blobUrl, {
