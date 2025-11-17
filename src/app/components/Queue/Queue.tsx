@@ -6,7 +6,7 @@ import { Album } from '@/lib/interfaces';
 import axios from 'axios';
 import { FaXmark } from 'react-icons/fa6';
 import { AnimatePresence, motion } from 'motion/react'
-import { LoadingCtx, OpenAlbumCtx, OpenQueueCtx } from '@/app/context';
+import { LoadingCtx, OpenAlbumCtx, OpenArtistCtx, OpenQueueCtx } from '@/app/context';
 
 import "./Queue.css"
 
@@ -14,6 +14,7 @@ const Queue = () => {
   const [openQueue, setOpenQueue] = useContext(OpenQueueCtx)!;
   const [loading] = useContext(LoadingCtx)!;
   const [openAlbum] = useContext(OpenAlbumCtx)!;
+  const [openArtist] = useContext(OpenArtistCtx)!;
 
   const { lastMessage } = useWebSocket('/api/ws');
 
@@ -64,16 +65,18 @@ const Queue = () => {
           exit=   {{ opacity: 0, scale: .8 }}
           onClick={(e) => e.stopPropagation()}> 
           Download queue
-          <div className='QueuedAlbumList'>
+          <div className='QueuedList'>
             {queueList?.map((album, i) => {
               return (
-                <div className='QueuedAlbum' key={i}>
+                <div className='QueuedItem' key={i}>
                 {i=== 0 && 
                   <FaDownload/>
                   ||
                   <FaHourglass/>
                 }
-                {album.title}
+                <p>
+                  {album.title}
+                </p>
                 </div>
               )
             })}
@@ -91,7 +94,7 @@ const Queue = () => {
     }
     </AnimatePresence>
 
-    <div className={`Queue ${loading||openAlbum||openQueue?'blur':''}`} onClick={ () => setOpenQueue(true) }>
+    <div className={`Queue ${loading||openAlbum||openQueue||openArtist?'blur':''}`} onClick={ () => setOpenQueue(true) }>
       <FaTasks/> 
       {currentDownload && 
         <p>{currentDownload}</p>
