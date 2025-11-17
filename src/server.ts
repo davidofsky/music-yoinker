@@ -46,6 +46,21 @@ app.prepare().then(() => {
     }
   });
 
+  serverApp.get('/api/artists', async (req, res) => {
+    const query = req.query.query as string;
+    if (!query) {
+      return res.status(400).send("Parameter 'query' is required");
+    }
+
+    try {
+      const result = await Hifi.searchArtist(query);
+      res.json(result);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Search failed' });
+    }
+  });
+
   serverApp.get('/api/album', async (req, res) => {
     const id = req.query.id as string;
     if (!id) {
@@ -54,6 +69,21 @@ app.prepare().then(() => {
 
     try {
       const result = await Hifi.searchAlbumTracks(id);
+      res.json(result);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Retrieve failed' });
+    }
+  });
+
+  serverApp.get('/api/artist', async (req, res) => {
+    const id = req.query.id as string;
+    if (!id) {
+      return res.status(400).send("Parameter 'id' is required");
+    }
+
+    try {
+      const result = await Hifi.searchArtistAlbums(id);
       res.json(result);
     } catch (err) {
       console.error(err);

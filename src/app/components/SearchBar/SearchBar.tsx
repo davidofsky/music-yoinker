@@ -1,5 +1,5 @@
 "use client"
-import { Album, Track } from "@/lib/interfaces";
+import { Album, Artist, Track } from "@/lib/interfaces";
 import axios from "axios";
 import { useRef, Dispatch, SetStateAction, useContext, useEffect } from "react";
 import {FaSearch} from 'react-icons/fa'
@@ -12,6 +12,7 @@ type Props = {
   browseMode: BrowseMode,
   setAlbums: Dispatch<SetStateAction<Album[]>>,
   setTracks: Dispatch<SetStateAction<Track[]>>
+  setArtists: Dispatch<SetStateAction<Artist[]>>
 }
 
 const SearchBar = (props: Props) => {
@@ -19,26 +20,21 @@ const SearchBar = (props: Props) => {
   const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => { searchRef.current?.focus(); }, []);
 
+  const stateSetterConfig = {
+    [BrowseMode.Albums]: { endpoint: "/api/albums", setter: props.setAlbums },
+    [BrowseMode.Tracks]: { endpoint: "/api/tracks", setter: props.setTracks },
+    [BrowseMode.Artists]: { endpoint: "/api/artists", setter: props.setArtists }
+  };
+
   const search = async () => {
     if (!searchRef.current) throw new Error ("No reference found to searchbar");
     const query = searchRef.current.value;
     if (query.trim().length === 0) return;
     setLoading(true);
 
-    let endpoint = "/api/albums";
-    if (props.browseMode === BrowseMode.Tracks) endpoint = "/api/tracks"
-    const result = await axios.get(endpoint, {
-      params: { query }
-    });
-
-
-    if (props.browseMode === BrowseMode.Albums) {
-      const albums: Album[] = result.data;
-      props.setAlbums(albums);
-    } else if (props.browseMode === BrowseMode.Tracks) {
-      const tracks: Track[] = result.data;
-      props.setTracks(tracks);
-    }
+    const { endpoint, setter } = stateSetterConfig[props.browseMode];
+    const result = await axios.get(endpoint, { params: { query } });
+    setter(result.data);
 
     setLoading(false);
   }

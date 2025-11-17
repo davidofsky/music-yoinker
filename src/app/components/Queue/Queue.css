@@ -41,13 +41,14 @@
   max-height: 90vh;
 }
 
-.QueuedAlbumlist {
+.QueuedList {
   max-height: 50vh;
   overflow-y: scroll;
   overflow-x: visible;
 }
 
-.QueuedAlbum {
+.QueuedItem {
+  min-width: 0;
   width: 100%;
   padding: .2em;
   margin-top: .2em;
@@ -56,9 +57,6 @@
   border-radius: .5em;
   overflow: hidden;
   border: 2px solid #333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   display: flex;
   gap: 1em;
   align-items: center;
