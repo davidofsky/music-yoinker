@@ -55,7 +55,7 @@ const ArtistViewer = () => {
         <div className="AlbumList">
         {albums.map(album => {
           return (
-            <TinyAlbum album={album}/>
+            <TinyAlbum key={album.id} album={album}/>
           )
         })}
         </div>
