@@ -58,13 +58,13 @@ class Downloader {
 
     try {
       console.info(`Downloading track: ${track.title}`);
-      const blobUrl = await Hifi.GetTrack(track.id);
+      const blobUrl = await Hifi.downloadTrack(track.id);
 
       tmpFile = tmp.fileSync({ postfix: '.flac' });
       const filePath = tmpFile.name;
 
       console.debug('retrieving album data')
-      const album = Hifi.GetAlbum(track.album_id).then((e) => {
+      const album = Hifi.downloadAlbum(track.album_id).then((e) => {
         console.debug('retrieved album');
         return e;
       });
