@@ -4,6 +4,7 @@ import { Album, Artist, Track } from './interfaces';
 class Hifi {
   private static maxRetries = 3;
   private static retryDelay = 2000; // 2 seconds between retries
+  private static hifiSource = 0;
 
   /**
    * SEARCH_SOURCES:
@@ -30,8 +31,8 @@ class Hifi {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  private static getNextSource(sources: string[], hifiSource: number): number {
-    return (hifiSource + 1) % sources.length;
+  private static getNextSource(sources: string[]): number {
+    return (this.hifiSource + 1) % sources.length;
   }
 
   private static async retryWithSourceCycle<T>(
@@ -42,10 +43,9 @@ class Hifi {
     const sources = this.getHifiSources(sourceType);
     const totalAttempts = sources.length * this.maxRetries;
     let lastError: Error | null = null;
-    let hifiSource = 0;
 
     for (let attempt = 0; attempt < totalAttempts; attempt++) {
-      const currentSource = sources[hifiSource];
+      const currentSource = sources[this.hifiSource];
 
       try {
         console.log(`[${operationName}] Attempt ${attempt + 1}/${totalAttempts} using source: ${currentSource}`);
@@ -55,7 +55,7 @@ class Hifi {
         console.error(`[${operationName}] Failed with source ${currentSource}:`, (error as Error)?.message);
 
         // Move to next source
-        hifiSource = this.getNextSource(sources, hifiSource);
+        this.hifiSource = this.getNextSource(sources);
 
         // Sleep before retry (except on last attempt)
         if (attempt < totalAttempts - 1) {
