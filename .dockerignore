@@ -1,0 +1,8 @@
+# Ignore node modules
+node_modules/
+
+# Ignorem music folder
+music
+
+# Ignore navidrome data folder
+data
