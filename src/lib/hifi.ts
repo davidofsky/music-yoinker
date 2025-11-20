@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
 import { Album, Artist, Track } from './interfaces';
 
 class Hifi {
+  private static readonly DEFAULT_HEADERS = { accept: 'application/vnd.api+json' };
   private static maxRetries = 3;
   private static retryDelay = 2000; // 2 seconds between retries
   private static hifiSource = 0;
@@ -15,16 +17,11 @@ class Hifi {
    *  - Suitable for both searching and downloading
    */
   private static getHifiSources(type: 'search' | 'download'): string[] {
-    const searchSources = (process.env.SEARCH_SOURCES || "").split(',');
-    const downloadSources = (process.env.DOWNLOAD_SOURCES || "").split(',');
+    const searchSources = (process.env.SEARCH_SOURCES || '').split(',').map(s => s.trim()).filter(Boolean);
+    const downloadSources = (process.env.DOWNLOAD_SOURCES || '').split(',').map(s => s.trim()).filter(Boolean);
 
-    if (type === 'search') {
-      return searchSources.concat(downloadSources);
-    } else if (type === 'download') {
-      return downloadSources;
-    } else {
-      return [];
-    }
+    if (type === 'search') return [...searchSources, ...downloadSources];
+    return downloadSources;
   }
 
   private static sleep(ms: number): Promise<void> {
@@ -42,93 +39,66 @@ class Hifi {
   ): Promise<T> {
     const sources = this.getHifiSources(sourceType);
     const totalAttempts = sources.length * this.maxRetries;
-    let lastError: Error | null = null;
+    let lastError: any = null;
 
     for (let attempt = 0; attempt < totalAttempts; attempt++) {
-      const currentSource = sources[this.hifiSource];
-
+      const currentSource = sources[this.hifiSource % sources.length];
       try {
         console.log(`[${operationName}] Attempt ${attempt + 1}/${totalAttempts} using source: ${currentSource}`);
         return await operation(currentSource);
       } catch (error) {
-        lastError = error as Error;
-        console.error(`[${operationName}] Failed with source ${currentSource}:`, (error as Error)?.message);
+        lastError = error;
+        console.error(`[${operationName}] Failed with source ${currentSource}:`, (error as Error)?.message ?? error);
 
         // Move to next source
-        this.hifiSource = this.getNextSource(sources);
+        this.hifiSource = (this.hifiSource + 1) % sources.length;
 
-        // Sleep before retry (except on last attempt)
         if (attempt < totalAttempts - 1) {
           await this.sleep(this.retryDelay);
         }
       }
     }
 
-    throw new Error(`[${operationName}] All ${totalAttempts} attempts failed. Last error: ${lastError?.message}`);
+    throw new Error(`[${operationName}] All ${totalAttempts} attempts failed. Last error: ${lastError?.message ?? String(lastError)}`);
   }
 
   public static async searchAlbum(query: string): Promise<Album[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/search`, {
-        headers: {
-          "accept": "application/vnd.api+json",
-        },
-        params: {
-          "al": query
-        }
+        headers: this.DEFAULT_HEADERS,
+        params: { al: query }
       });
 
-      const albums: Album[] = [];
-      if (result.data.albums?.items) {
-        result.data.albums.items.forEach((album) => {
-          this.parseAlbum(album).then(a => {
-            albums.push(a)
-          })
-        });
-      }
-      return albums;
+      const items = result.data?.albums?.items || [];
+      const albums = await Promise.all(items.map((album: any) => this.parseAlbum(album)));
+      return albums.filter(Boolean) as Album[];
     }, 'SearchAlbum', 'search');
   }
   public static async searchArtist(query: string) : Promise<Artist[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/search`, {
-        headers: {
-          "accept": "application/vnd.api+json",
-        },
-        params: {
-          "a": query
-        }
+        headers: this.DEFAULT_HEADERS,
+        params: { a: query }
       });
 
-      const artists: Artist[] = [];
-      result.data[0].artists.items.forEach(artist => {
-        const picture = artist.picture ? "https://resources.tidal.com/images/" + artist.picture.replaceAll('-', '/') + "/750x750.jpg" : "/david.jpeg"
-        artists.push({
-          id: artist.id,
-          name: artist.name,
-          picture
-        })
-      })
-      return artists
+      const items = result.data?.[0]?.artists?.items || [];
+      return items.map((artist: any) => {
+        const picture = artist.picture ? `https://resources.tidal.com/images/${artist.picture.replaceAll('-', '/')}/750x750.jpg` : '/david.jpeg';
+        return { id: artist.id, name: artist.name, picture } as Artist;
+      });
     }, 'SearchArtist', 'search');
   }
 
   public static async searchTrack(query: string): Promise<Track[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/search`, {
-        headers: {
-          "accept": "application/vnd.api+json",
-        },
-        params: {
-          "s": query
-        }
+        headers: this.DEFAULT_HEADERS,
+        params: { s: query }
       });
 
-      const tracks: Track[] = [];
-      result.data.items.forEach(track => {
-        this.parseTrack(track).then(t => { tracks.push(t) })
-      })
-      return tracks
+      const items = result.data?.items || [];
+      const tracks = await Promise.all(items.map((t: any) => this.parseTrack(t)));
+      return tracks.filter(Boolean) as Track[];
     }, 'SearchTrack', 'search');
   }
 
@@ -148,102 +118,76 @@ class Hifi {
   public static async downloadAlbum(id: string): Promise<Album> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/album`, {
-        headers: {
-          "accept": "application/vnd.api+json",
-        },
-        params: {
-          "id": id
-        }
+        headers: this.DEFAULT_HEADERS,
+        params: { id }
       });
 
-      return await this.parseAlbum(result.data[0])
+      return this.parseAlbum(result.data?.[0]);
     }, 'DownloadAlbum', 'download');
   }
 
   public static async searchArtistAlbums(id: string) : Promise<Album[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      console.debug(id)
       const result = await axios.get(`${sourceUrl}/artist`, {
-        headers: {
-          "accept": "application/vnd.api+json",
-        },
-        params: {
-          "f": id
-        }
+        headers: this.DEFAULT_HEADERS,
+        params: { f: id }
       });
 
-      const data = result.data[0].rows[0].modules.find(m=>m.type==="ALBUM_LIST")
-      const albums: Album[] = [];
-      data.pagedList.items.forEach(album => {
-        this.parseAlbum(album).then(a => albums.push(a))
-      })
-
-      return albums;
+      const data = result.data?.[0]?.rows?.[0]?.modules?.find((m: any) => m.type === 'ALBUM_LIST');
+      const items = data?.pagedList?.items || [];
+      const albums = await Promise.all(items.map((album: any) => this.parseAlbum(album)));
+      return albums.filter(Boolean) as Album[];
     }, 'SearchArtistAlbums', 'search');
   }
 
   public static async searchAlbumTracks(id: string): Promise<Track[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/album`, {
-        headers: {
-          "accept": "application/vnd.api+json",
-        },
-        params: {
-          "id": id
-        }
+        headers: this.DEFAULT_HEADERS,
+        params: { id }
       });
 
-      const tracks: Track[] = [];
-      result.data[1]?.items?.forEach(track => {
-        this.parseTrack(track.item).then(t => tracks.push(t))
-      });
-
-      return tracks.sort((a, b) => {
-        return a.volumeNr - b.volumeNr || a.trackNr - b.trackNr;
-      });
+      const items = result.data?.[1]?.items || [];
+      const tracks = await Promise.all(items.map((t: any) => this.parseTrack(t.item)));
+      return tracks.filter(Boolean).sort((a, b) => a.volumeNr - b.volumeNr || a.trackNr - b.trackNr);
     }, 'SearchAlbumTracks', 'search');
   }
 
-
-  private static async parseAlbum(album): Promise<Album> {
-    const tidalArtists = album.artists;
-    const artists: Artist[] = tidalArtists.map((t) => ({
-      id: t.id,
-      name: t.name
-    }));
-    return (<Album>{
-      id: album.id,
-      title: album.title,
-      releaseDate: album.releaseDate,
+  private static parseAlbum(album: any): Album {
+    const tidalArtists = album?.artists || [];
+    const artists: Artist[] = tidalArtists.map((t: any) => ({ id: t.id, name: t.name }));
+    return {
+      id: album?.id,
+      title: album?.title,
+      releaseDate: album?.releaseDate,
       artists,
-      artwork: "https://resources.tidal.com/images/" + album.cover.replaceAll('-', '/') + "/640x640.jpg",
-      color: album.vibrantColor
-    });
+      artwork: album?.cover ? `https://resources.tidal.com/images/${album.cover.replaceAll('-', '/')}/640x640.jpg` : undefined,
+      color: album?.vibrantColor
+    } as Album;
   }
 
-  private static async parseTrack(track): Promise<Track> {
-    return (<Track>{
-      id: track.id,
-      title: track.title,
-      volumeNr: track.volumeNumber,
-      trackNr: track.trackNumber,
-      duration: track.duration,
-      popularity: track.popularity,
-      bpm: track.bpm,
-      key: track.key,
-      keyScale: track.keyScale,
-      isrc: track.isrc,
-      explicit: track.explicit,
-      type: "album",
-      version: track.version || "",
-      album: track.album.title,
-      album_id: track.album.id,
-      artist: track.artist.name,
-      copyright: track.copyright,
-      artwork: "https://resources.tidal.com/images/" + track.album.cover.replaceAll('-', '/') + "/640x640.jpg"
-    });
+  private static parseTrack(track: any): Track {
+    return {
+      id: track?.id,
+      title: track?.title,
+      volumeNr: track?.volumeNumber || track?.volumeNr || 0,
+      trackNr: track?.trackNumber || track?.trackNr || 0,
+      duration: track?.duration,
+      popularity: track?.popularity,
+      bpm: track?.bpm,
+      key: track?.key,
+      keyScale: track?.keyScale,
+      isrc: track?.isrc,
+      explicit: track?.explicit,
+      type: 'album',
+      version: track?.version || '',
+      album: track?.album?.title || track?.album,
+      album_id: track?.album?.id || track?.album_id,
+      artist: track?.artist?.name || track?.artist,
+      copyright: track?.copyright,
+      artwork: track?.album?.cover ? `https://resources.tidal.com/images/${track.album.cover.replaceAll('-', '/')}/640x640.jpg` : undefined
+    } as Track;
   }
-
 }
 
 export default Hifi;
