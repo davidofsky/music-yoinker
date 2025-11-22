@@ -91,11 +91,30 @@ app.prepare().then(() => {
     }
   });
 
-  serverApp.post('/api/albums', async (req, res) => {
+  serverApp.post('/api/tracks', async (req, res) => {
     try {
-      const album = req.body;
-      Downloader.AddToQueue(album);
+      const tracks = req.body;
+      Downloader.AddToQueue(tracks);
       res.json({ status: 'OK' });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Failed to add to queue' });
+    }
+  });
+
+  serverApp.delete('/api/track', async (req, res) => {
+    try {
+      const id = req.query.id as string;
+      if (!id) {
+        return res.status(400).send("Parameter 'id' is required");
+      }
+      const errorMessage = Downloader.RemoveFromQueue(id);
+      if (errorMessage) {
+        res.statusCode = 400 ;
+        res.json( { status: 'Bad request', message: errorMessage})
+      } else {
+        res.json({ status: 'OK' });
+      }
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Failed to add to queue' });
