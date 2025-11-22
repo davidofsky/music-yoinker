@@ -62,4 +62,19 @@
   align-items: center;
   padding-left: 1em;
   padding-right: 1em;
+  justify-content: space-between;
+
+  > p {
+    text-overflow: ellipsis;
+    width: 90%;
+    overflow: hidden;
+  }
+
+  > svg {
+    min-width: min-content;
+  }
+  .CancelQueue {
+    margin-left: auto;
+    cursor: pointer;
+  }
 }
