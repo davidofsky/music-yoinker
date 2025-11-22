@@ -69,7 +69,7 @@ class Hifi {
 
   public static async searchAlbum(query: string): Promise<Album[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get(`${sourceUrl}/search`, {
+      const result = await axios.get(`${sourceUrl}/search/`, {
         headers: {
           "accept": "application/vnd.api+json",
         },
@@ -91,7 +91,7 @@ class Hifi {
   }
   public static async searchArtist(query: string) : Promise<Artist[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get(`${sourceUrl}/search`, {
+      const result = await axios.get(`${sourceUrl}/search/`, {
         headers: {
           "accept": "application/vnd.api+json",
         },
@@ -115,7 +115,7 @@ class Hifi {
 
   public static async searchTrack(query: string): Promise<Track[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get(`${sourceUrl}/search`, {
+      const result = await axios.get(`${sourceUrl}/search/`, {
         headers: {
           "accept": "application/vnd.api+json",
         },
@@ -134,7 +134,7 @@ class Hifi {
 
   public static async downloadTrack(id: string): Promise<string> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get(`${sourceUrl}/track`, {
+      const result = await axios.get(`${sourceUrl}/track/`, {
         params: {
           id,
           quality: "LOSSLESS"
@@ -147,7 +147,7 @@ class Hifi {
 
   public static async downloadAlbum(id: string): Promise<Album> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get(`${sourceUrl}/album`, {
+      const result = await axios.get(`${sourceUrl}/album/`, {
         headers: {
           "accept": "application/vnd.api+json",
         },
@@ -163,7 +163,7 @@ class Hifi {
   public static async searchArtistAlbums(id: string) : Promise<Album[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       console.debug(id)
-      const result = await axios.get(`${sourceUrl}/artist`, {
+      const result = await axios.get(`${sourceUrl}/artist/`, {
         headers: {
           "accept": "application/vnd.api+json",
         },
@@ -184,7 +184,7 @@ class Hifi {
 
   public static async searchAlbumTracks(id: string): Promise<Track[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get(`${sourceUrl}/album`, {
+      const result = await axios.get(`${sourceUrl}/album/`, {
         headers: {
           "accept": "application/vnd.api+json",
         },
