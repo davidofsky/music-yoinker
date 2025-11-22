@@ -12,7 +12,7 @@ const AlbumViewer = () => {
   const closeAction = () => setOpenAlbum(null);
 
   const downloadAlbum = async () => {
-    axios.post("/api/albums", openAlbum?.Tracks)
+    axios.post("/api/tracks", openAlbum?.Tracks)
   }
 
   return (
