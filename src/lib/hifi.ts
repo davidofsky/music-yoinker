@@ -58,7 +58,6 @@ class Hifi {
         }
       }
     }
-
     throw new Error(`[${operationName}] All ${totalAttempts} attempts failed. Last error: ${lastError?.message ?? String(lastError)}`);
   }
 
@@ -71,10 +70,11 @@ class Hifi {
 
       const items = result.data?.albums?.items || [];
       const albums = await Promise.all(items.map((album: any) => this.parseAlbum(album)));
-      return albums.filter(Boolean) as Album[];
+      return this.removeDoubleAlbums(albums.filter(Boolean) as Album[]);
     }, 'SearchAlbum', 'search');
   }
-  public static async searchArtist(query: string) : Promise<Artist[]> {
+
+  public static async searchArtist(query: string): Promise<Artist[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/search`, {
         headers: this.DEFAULT_HEADERS,
@@ -126,7 +126,7 @@ class Hifi {
     }, 'DownloadAlbum', 'download');
   }
 
-  public static async searchArtistAlbums(id: string) : Promise<Album[]> {
+  public static async searchArtistAlbums(id: string): Promise<Album[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/artist`, {
         headers: this.DEFAULT_HEADERS,
@@ -136,7 +136,7 @@ class Hifi {
       const data = result.data?.[0]?.rows?.[0]?.modules?.find((m: any) => m.type === 'ALBUM_LIST');
       const items = data?.pagedList?.items || [];
       const albums = await Promise.all(items.map((album: any) => this.parseAlbum(album)));
-      return albums.filter(Boolean) as Album[];
+      return this.removeDoubleAlbums(albums.filter(Boolean) as Album[]);
     }, 'SearchArtistAlbums', 'search');
   }
 
@@ -187,6 +187,30 @@ class Hifi {
       copyright: track?.copyright,
       artwork: track?.album?.cover ? `https://resources.tidal.com/images/${track.album.cover.replaceAll('-', '/')}/640x640.jpg` : undefined
     } as Track;
+  }
+
+  private static removeDoubleAlbums(albums: Album[]): Album[] {
+    const map = new Map<string, Album>();
+
+    for (const a of albums) {
+      const artistNames = (a.artists || []).map(ar => (ar.name || ar.id || '').toString().toLowerCase()).sort().join('|');
+      const title = (a.title || '').toString().toLowerCase().trim().split(/\s+/).join(' ');
+      let year = '';
+
+      if (a.releaseDate) {
+        const d = new Date(a.releaseDate);
+        const t = d.getTime();
+        if (Number.isFinite(t)) year = String(d.getFullYear());
+        else year = String(a.releaseDate).trim();
+      }
+
+      const key = `${artistNames}::${title}::${year}`;
+      if (!map.has(key)) map.set(key, a);
+    }
+
+    console.log(`[RemoveDoubleAlbums] Reduced from ${albums.length} to ${map.size} albums.`);
+
+    return Array.from(map.values());
   }
 }
 
