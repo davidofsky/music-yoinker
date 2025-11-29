@@ -27,6 +27,17 @@ class Downloader {
     });
   }
 
+  // Returns error message if exists
+  public static RemoveFromQueue(trackId: string) : string|null {
+    console.log("removing track with id ",trackId)
+    const index = this.queue.findIndex(q => q.id.toString() === trackId.toString());
+    if (index === -1) return `Queue does not contain track with id: ${trackId}.`;
+    if (index === 0) return `Track with id ${trackId} is currently being processed.`;
+    this.queue.splice(index, 1);
+    broadcast({ type: 'queue', message: JSON.stringify(this.queue) });
+    return null
+  } 
+
   private static async download() {
     if (this.processing) return;
     if (!this.queue || this.queue.length === 0) return;

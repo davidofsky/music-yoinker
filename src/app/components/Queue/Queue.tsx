@@ -1,8 +1,8 @@
 "use client"
-import { FaTasks, FaHourglass, FaDownload } from 'react-icons/fa'
+import { FaTasks, FaHourglass, FaDownload, FaTrash } from 'react-icons/fa'
 import { useWebSocket } from "../../hooks/useWebsocket";
 import { useContext, useEffect, useState } from 'react';
-import { Album } from '@/lib/interfaces';
+import { Track } from '@/lib/interfaces';
 import axios from 'axios';
 import { FaXmark } from 'react-icons/fa6';
 import { AnimatePresence, motion } from 'motion/react'
@@ -18,28 +18,34 @@ const Queue = () => {
 
   const { lastMessage } = useWebSocket('/api/ws');
 
-  const [queueList, setQueueList] = useState<Album[]>([]);
+  const [queueList, setQueueList] = useState<Track[]>([]);
   const [currentDownload, setCurrentDownload] = useState<string|null>(null);
 
   useEffect(() => {
     axios.get("/api/queue").then(result => {
-      const albums = (result.data as never) as Album[];
-      processAlbums(albums);
+      const tracks = (result.data as never) as Track[];
+      processTracks(tracks);
     })
   }, [])
 
   useEffect(() => {
     if (!lastMessage) return;
     if (lastMessage.type==="queue") {
-      const albums = JSON.parse(lastMessage.message) as Album[]
-      processAlbums(albums);
+      const tracks = JSON.parse(lastMessage.message) as Track[]
+      processTracks(tracks);
     }
   }, [lastMessage])
 
-  const processAlbums = (albums: Album[]) => {
-    if (albums.length>0) setCurrentDownload(albums[0].title);
+  const processTracks = (tracks: Track[]) => {
+    if (tracks.length>0) setCurrentDownload(tracks[0].title);
     else setCurrentDownload(null);
-    setQueueList(albums);
+    setQueueList(tracks);
+  }
+
+  const removeTrack = async (trackId: string) => {
+    await axios.delete("/api/track", {
+      params: { id: trackId }
+    })
   }
 
   return (
@@ -66,17 +72,19 @@ const Queue = () => {
           onClick={(e) => e.stopPropagation()}> 
           Download queue
           <div className='QueuedList'>
-            {queueList?.map((album, i) => {
+            {queueList?.map((track, i) => {
               return (
                 <div className='QueuedItem' key={i}>
-                {i=== 0 && 
-                  <FaDownload/>
-                  ||
-                  <FaHourglass/>
-                }
-                <p>
-                  {album.title}
-                </p>
+                  {i === 0 && 
+                    <FaDownload/>
+                    ||
+                    <FaHourglass/>
+                  }
+                  <p>
+                    {track.title}
+                  </p>
+                  {i > 0 && <FaTrash className='CancelQueue' 
+                    onClick={() => removeTrack(track.id)}/> }
                 </div>
               )
             })}
