@@ -12,7 +12,14 @@ class Downloader {
   private static albums: Album[] = [];
   private static queue: Track[] = []
   private static processing: boolean = false;
-  public static GetQueue = () => {return this.queue}
+  private static cleanedAlbumDirs: Map<string, number> = new Map();
+  private static readonly CLEAN_EXISTING_DOWNLOADS: boolean = (process.env.CLEAN_EXISTING_DOWNLOADS || 'false').toLowerCase() === 'true';
+  private static readonly CLEAN_EXISTING_DOWNLOADS_TTL_MS: number = (() => {
+    const configuredSeconds = process.env.CLEAN_EXISTING_DOWNLOADS_TTL_SECONDS;
+    const seconds = configuredSeconds ? parseInt(configuredSeconds, 10) : 3600;
+    return (isNaN(seconds) ? 3600 : seconds) * 1000;
+  })();
+  public static GetQueue = () => { return this.queue }
 
   public static AddToQueue(tracks: Track[]) {
     this.queue.push(...tracks);
@@ -28,15 +35,15 @@ class Downloader {
   }
 
   // Returns error message if exists
-  public static RemoveFromQueue(trackId: string) : string|null {
-    console.log("removing track with id ",trackId)
+  public static RemoveFromQueue(trackId: string): string | null {
+    console.log("removing track with id ", trackId)
     const index = this.queue.findIndex(q => q.id.toString() === trackId.toString());
     if (index === -1) return `Queue does not contain track with id: ${trackId}.`;
     if (index === 0) return `Track with id ${trackId} is currently being processed.`;
     this.queue.splice(index, 1);
     broadcast({ type: 'queue', message: JSON.stringify(this.queue) });
     return null
-  } 
+  }
 
   private static async download() {
     if (this.processing) return;
@@ -102,7 +109,7 @@ class Downloader {
       const response = await axios.get(blobUrl, {
         responseType: 'arraybuffer',
         timeout: 60000 // Longer timeout for actual download
-      }).then((e) => {console.debug('retrieved blob'); return e;});
+      }).then((e) => { console.debug('retrieved blob'); return e; });
 
       fs.writeFileSync(filePath, response.data);
 
@@ -115,8 +122,17 @@ class Downloader {
       const albumDir = path.join(
         process.env.MUSIC_DIRECTORY || "",
         this.sanitizeFilename(track.artist),
-        this.sanitizeFilename(track.album||track.title)
+        this.sanitizeFilename(track.album || track.title)
       );
+
+      /**
+       * If configured, remove existing files in the target album directory.
+       * Keep a timestamped cache so we only re-clean if the last clean
+       * was older than `CLEAN_EXISTING_DOWNLOADS_TTL_MS` (default 1 hour).
+       */
+      if (this.CLEAN_EXISTING_DOWNLOADS) {
+        this.removeExistingAlbum(albumDir);
+      }
 
       fs.mkdirSync(albumDir, { recursive: true });
 
@@ -154,11 +170,32 @@ class Downloader {
       if (tmpFile) {
         try {
           tmpFile.removeCallback();
-        } catch (_) {
+        } catch {
           // Ignore cleanup errors
         }
       }
       throw (e);
+    }
+  }
+
+  private static removeExistingAlbum(albumDir: string) {
+    const now = Date.now();
+    const last = this.cleanedAlbumDirs.get(albumDir);
+    const needsCleaning = !last || (now - last) > Downloader.CLEAN_EXISTING_DOWNLOADS_TTL_MS;
+
+    if (needsCleaning) {
+      try {
+        if (fs.existsSync(albumDir)) {
+          const existing = fs.readdirSync(albumDir);
+          if (existing.length > 0) {
+            console.info(`Cleaning existing album directory: ${albumDir}`);
+            fs.rmSync(albumDir, { recursive: true, force: true });
+          }
+        }
+      } catch (err) {
+        console.error(`Failed to clean album directory ${albumDir}:`, err);
+      }
+      this.cleanedAlbumDirs.set(albumDir, now);
     }
   }
 
