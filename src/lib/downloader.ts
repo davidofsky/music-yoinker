@@ -13,12 +13,15 @@ class Downloader {
   private static queue: Track[] = []
   private static processing: boolean = false;
   private static cleanedAlbumDirs: Map<string, number> = new Map();
-  private static readonly CLEAN_EXISTING_DOWNLOADS: boolean = (process.env.CLEAN_EXISTING_DOWNLOADS || 'false').toLowerCase() === 'true';
-  private static readonly CLEAN_EXISTING_DOWNLOADS_TTL_MS: number = (() => {
+
+  private static get CLEAN_EXISTING_DOWNLOADS(): boolean {
+    return (process.env.CLEAN_EXISTING_DOWNLOADS || 'false').toLowerCase() === 'true';
+  }
+  private static get CLEAN_EXISTING_DOWNLOADS_TTL_MS(): number {
     const configuredSeconds = process.env.CLEAN_EXISTING_DOWNLOADS_TTL_SECONDS;
     const seconds = configuredSeconds ? parseInt(configuredSeconds, 10) : 3600;
     return (isNaN(seconds) ? 3600 : seconds) * 1000;
-  })();
+  }
   public static GetQueue = () => { return this.queue }
 
   public static AddToQueue(tracks: Track[]) {
@@ -130,6 +133,7 @@ class Downloader {
        * Keep a timestamped cache so we only re-clean if the last clean
        * was older than `CLEAN_EXISTING_DOWNLOADS_TTL_MS` (default 1 hour).
        */
+      console.log("CLEAN_EXISTING_DOWNLOADS is ", this.CLEAN_EXISTING_DOWNLOADS);
       if (this.CLEAN_EXISTING_DOWNLOADS) {
         this.removeExistingAlbum(albumDir);
       }
@@ -181,7 +185,7 @@ class Downloader {
   private static removeExistingAlbum(albumDir: string) {
     const now = Date.now();
     const last = this.cleanedAlbumDirs.get(albumDir);
-    const needsCleaning = !last || (now - last) > Downloader.CLEAN_EXISTING_DOWNLOADS_TTL_MS;
+    const needsCleaning = !last || (now - last) > this.CLEAN_EXISTING_DOWNLOADS_TTL_MS;
 
     if (needsCleaning) {
       try {
