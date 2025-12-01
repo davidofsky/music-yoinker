@@ -9,7 +9,14 @@ import Hifi from './hifi'
 
 class Downloader {
   private static get TRACK_DISC_SEPARATOR(): string {
-    return process.env.TRACK_DISC_SEPARATOR ?? '.';
+    const raw = process.env.TRACK_DISC_SEPARATOR;
+    if (!raw) return '.';
+
+    let value = raw;
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    return value;
   }
   private static get PAD_LENGTH(): number {
     const raw = process.env.TRACK_PAD_LENGTH ?? '0';
