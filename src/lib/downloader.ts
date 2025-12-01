@@ -133,7 +133,6 @@ class Downloader {
        * Keep a timestamped cache so we only re-clean if the last clean
        * was older than `CLEAN_EXISTING_DOWNLOADS_TTL_MS` (default 1 hour).
        */
-      console.log("CLEAN_EXISTING_DOWNLOADS is ", this.CLEAN_EXISTING_DOWNLOADS);
       if (this.CLEAN_EXISTING_DOWNLOADS) {
         this.removeExistingAlbum(albumDir);
       }
