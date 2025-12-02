@@ -8,6 +8,31 @@ import { PegTheFile } from './pegger';
 import Hifi from './hifi'
 
 class Downloader {
+  private static get TRACK_DISC_SEPARATOR(): string {
+    const raw = process.env.TRACK_DISC_SEPARATOR;
+    if (!raw) return '.';
+
+    let value = raw;
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    return value;
+  }
+  private static get PAD_LENGTH(): number {
+    const raw = process.env.TRACK_PAD_LENGTH ?? '0';
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n > 0 ? n : 2;
+  }
+  private static get TRACK_TITLE_SEPARATOR(): string {
+    const raw = process.env.TRACK_TITLE_SEPARATOR;
+    if (!raw) return ' ';
+
+    let value = raw;
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    return value;
+  }
   private static readonly MAX_MEMORIZED_ALBUMS = 5;
   private static albums: Album[] = [];
   private static queue: Track[] = []
@@ -23,6 +48,13 @@ class Downloader {
     return (isNaN(seconds) ? 3600 : seconds) * 1000;
   }
   public static GetQueue = () => { return this.queue }
+
+  private static formatTrackNumber(value?: number | string) {
+    if (!value) return '';
+    const s = value.toString().trim();
+    if (s === '') return '';
+    return s.padStart(this.PAD_LENGTH, '0');
+  }
 
   public static AddToQueue(tracks: Track[]) {
     this.queue.push(...tracks);
@@ -116,11 +148,20 @@ class Downloader {
 
       fs.writeFileSync(filePath, response.data);
 
-      let version = '';
-      if (track.version !== '') version = ` (${track.version})`
-
+      const version = (track.version && track.version.toString().trim() !== '') ? ` (${track.version.toString().trim()})` : '';
       const sanitizedTitle = this.sanitizeFilename(track.title);
-      const fileName = `${track.volumeNr}.${track.trackNr} ${sanitizedTitle} ${version}.flac`.trim();
+      const volStr = this.formatTrackNumber(track.volumeNr);
+      const trackStr = this.formatTrackNumber(track.trackNr);
+
+      let prefix = '';
+      if (volStr && trackStr) prefix = `${volStr}${this.TRACK_DISC_SEPARATOR}${trackStr}`;
+      else if (trackStr) prefix = `${trackStr}`;
+      else if (volStr) prefix = `${volStr}`;
+
+      console.debug("Using track prefix:", prefix === '' ? '(none)' : `"${prefix}"`);
+      console.debug("Using track title separator:", `"${this.TRACK_TITLE_SEPARATOR}"`);
+      const titleJoin = prefix ? this.TRACK_TITLE_SEPARATOR : '';
+      const fileName = `${prefix}${titleJoin}${sanitizedTitle}${version}.flac`;
 
       const albumDir = path.join(
         process.env.MUSIC_DIRECTORY || "",
