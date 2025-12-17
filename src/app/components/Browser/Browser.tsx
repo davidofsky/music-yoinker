@@ -56,10 +56,10 @@ const Browser = () => {
       subtitle: track.artist,
       title: track.title,
       borderColor: "#aaa",
-      gradient: "linear-gradient(145deg, #1f1f1f, #000000)",
+      gradient: "linear-gradient(145deg, "+track.album.color+", #000000)",
       onClick: (() => {
         setOpenAlbum({
-          Title: track.album,
+          Title: track.album.title,
           Artist: track.artist,
           Type: "Single",
           Tracks: [track]

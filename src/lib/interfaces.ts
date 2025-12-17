@@ -21,8 +21,7 @@ export interface Track {
   explicit: boolean
   type: "album"|"single"
   version: string
-  album: string
-  album_id: string
+  album: Album
   artist: string
   copyright: string
   artwork: string
