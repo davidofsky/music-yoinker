@@ -2,7 +2,8 @@ import fs from 'fs';
 import tmp from 'tmp';
 import axios, { AxiosError } from "axios";
 import path from 'path';
-import { Album, Track } from "./interfaces";
+import { Track } from "./interfaces";
+import Tidal from "./tidal"
 import { broadcast } from './websocket';
 import { PegTheFile } from './pegger';
 import Hifi from './hifi'
@@ -33,8 +34,6 @@ class Downloader {
     }
     return value;
   }
-  private static readonly MAX_MEMORIZED_ALBUMS = 5;
-  private static albums: Album[] = [];
   private static queue: Track[] = []
   private static processing: boolean = false;
   private static cleanedAlbumDirs: Map<string, number> = new Map();
@@ -108,26 +107,6 @@ class Downloader {
     }
   }
 
-  private static async getAlbumById(albumId: string) {
-    let album = this.albums.find(a => a.id === albumId);
-    if (album) return album;
-
-    try {
-      console.info(`Fetching album with ID: ${albumId}`);
-      album = await Hifi.downloadAlbum(albumId);
-      console.info(`Fetched album metadata: ${album.title}`);
-
-      this.albums.push(album);
-      if (this.albums.length > this.MAX_MEMORIZED_ALBUMS) {
-        this.albums.shift();
-      }
-
-      return album;
-    } catch (e) {
-      console.error(`Error fetching album with ID ${albumId}:`, e);
-      throw e;
-    }
-  }
 
   private static async downloadTrack(track: Track) {
     let tmpFile: tmp.FileResult | null = null;
@@ -135,7 +114,7 @@ class Downloader {
     try {
       console.info(`Downloading track: ${track.title}`);
       const blobUrl = await Hifi.downloadTrack(track.id);
-      const album = this.getAlbumById(track.album_id).then((e) => { return e; });
+      const releaseDate = Tidal.getReleaseData(track.album.id);
 
       tmpFile = tmp.fileSync({ postfix: '.flac' });
       const filePath = tmpFile.name;
@@ -166,7 +145,7 @@ class Downloader {
       const albumDir = path.join(
         process.env.MUSIC_DIRECTORY || "",
         this.sanitizeFilename(track.artist),
-        this.sanitizeFilename(track.album || track.title)
+        this.sanitizeFilename(track.album.title || track.title)
       );
 
       /**
@@ -183,8 +162,8 @@ class Downloader {
       const tempFile = await PegTheFile(filePath, {
         title: track.title + version,
         artist: track.artist,
-        date: (await album).releaseDate,
-        album: track.album || "",
+        date: (await releaseDate),
+        album: track.album.title || "",
         isrc: track.isrc || "",
         copyright: track.copyright || "",
         discNumber: track.volumeNr?.toString() || "",
