@@ -13,7 +13,7 @@ export default class Tidal {
   private static albumReleases: AlbumRelease[] = [];
   
   private static authToken = "";
-  private static tokenExpiry: number = 0; // Unix timestamp in milliseconds
+  private static tokenExpiry: number = 0;
 
   private static async getAuthToken() {
     console.info("Retrieving authentication token from Tidal");
@@ -78,7 +78,7 @@ export default class Tidal {
       if (axios.isAxiosError(e) && e.response?.status === 401 && firstAttempt) {
         console.warn(`401 Unauthorized for album ${albumId}.`);
         await this.getAuthToken();
-        return this.getReleaseData(albumId, false); // Recursive call with isRetry = true
+        return this.getReleaseData(albumId, false); 
       }
 
       console.error(`Error fetching album releasedate with ID ${albumId}:`, e);
