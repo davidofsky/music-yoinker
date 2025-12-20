@@ -116,14 +116,20 @@ class Downloader {
       const blobUrl = await Hifi.downloadTrack(track.id);
       const releaseDate = Tidal.getReleaseData(track.album.id);
 
-      tmpFile = tmp.fileSync({ postfix: '.flac' });
-      const filePath = tmpFile.name;
-
-      console.debug('retrieving blob')
+      console.debug('retrieving blob', blobUrl)
       const response = await axios.get(blobUrl, {
         responseType: 'arraybuffer',
         timeout: 60000 // Longer timeout for actual download
       }).then((e) => { console.debug('retrieved blob'); return e; });
+      
+      const contentType = response.headers['content-type'];
+
+      let extension = '.flac'
+      if (contentType.includes('audio/mp4')) extension = '.mp4'; 
+      else if (contentType.includes('audio/mp3')) extension = '.mp3';
+
+      tmpFile = tmp.fileSync({ postfix: extension });
+      const filePath = tmpFile.name;
 
       fs.writeFileSync(filePath, response.data);
 
@@ -140,7 +146,7 @@ class Downloader {
       console.debug("Using track prefix:", prefix === '' ? '(none)' : `"${prefix}"`);
       console.debug("Using track title separator:", `"${this.TRACK_TITLE_SEPARATOR}"`);
       const titleJoin = prefix ? this.TRACK_TITLE_SEPARATOR : '';
-      const fileName = `${prefix}${titleJoin}${sanitizedTitle}${version}.flac`;
+      const fileName = `${prefix}${titleJoin}${sanitizedTitle}${version}${extension}`;
 
       const albumDir = path.join(
         process.env.MUSIC_DIRECTORY || "",
@@ -179,6 +185,7 @@ class Downloader {
 
       // Move file to correct destination
       const finalPath = path.join(albumDir, fileName);
+      console.info("Copying file to : " + finalPath);
       fs.mkdirSync(path.dirname(finalPath), { recursive: true });
       fs.copyFileSync(tempFile, finalPath);
       console.info("Removing file: " + tempFile);
