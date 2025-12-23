@@ -8,20 +8,8 @@ class Hifi {
   private static retryDelay = 2000; // 2 seconds between retries
   private static hifiSource = 0;
 
-  /**
-   * SEARCH_SOURCES:
-   *  - Way faster
-   *  - Only suitable for searching
-   * DOWNLOAD_SOURCES:
-   *  - More reliable
-   *  - Suitable for both searching and downloading
-   */
-  private static getHifiSources(type: 'search' | 'download'): string[] {
-    const searchSources = (process.env.SEARCH_SOURCES || '').split(',').map(s => s.trim()).filter(Boolean);
-    const downloadSources = (process.env.DOWNLOAD_SOURCES || '').split(',').map(s => s.trim()).filter(Boolean);
-
-    if (type === 'search') return [...searchSources, ...downloadSources];
-    return downloadSources;
+  private static getHifiSources(): string[] {
+    return (process.env.HIFI_SOURCES || '').split(',').map(s => s.trim()).filter(Boolean);
   }
 
   private static sleep(ms: number): Promise<void> {
@@ -35,9 +23,8 @@ class Hifi {
   private static async retryWithSourceCycle<T>(
     operation: (sourceUrl: string) => Promise<T>,
     operationName: string,
-    sourceType: 'search' | 'download'
   ): Promise<T> {
-    const sources = this.getHifiSources(sourceType);
+    const sources = this.getHifiSources();
     const totalAttempts = sources.length * this.maxRetries;
     let lastError: any = null;
 
@@ -68,10 +55,10 @@ class Hifi {
         params: { al: query }
       });
 
-      const items = result.data?.albums?.items || [];
+      const items = result.data.data?.albums?.items || [];
       const albums = await Promise.all(items.map((album: any) => this.parseAlbum(album)));
       return this.removeDoubleAlbums(albums.filter(Boolean) as Album[]);
-    }, 'SearchAlbum', 'search');
+    }, 'SearchAlbum');
   }
 
   public static async searchArtist(query: string): Promise<Artist[]> {
@@ -81,12 +68,12 @@ class Hifi {
         params: { a: query }
       });
 
-      const items = result.data?.[0]?.artists?.items || [];
+      const items = result.data.data?.artists?.items || [];
       return items.map((artist: any) => {
         const picture = artist.picture ? `https://resources.tidal.com/images/${artist.picture.replaceAll('-', '/')}/750x750.jpg` : '/david.jpeg';
         return { id: artist.id, name: artist.name, picture } as Artist;
       });
-    }, 'SearchArtist', 'search');
+    }, 'SearchArtist');
   }
 
   public static async searchTrack(query: string): Promise<Track[]> {
@@ -96,10 +83,10 @@ class Hifi {
         params: { s: query }
       });
 
-      const items = result.data?.items || [];
+      const items = result.data.data?.items || [];
       const tracks = await Promise.all(items.map((t: any) => this.parseTrack(t)));
       return tracks.filter(Boolean) as Track[];
-    }, 'SearchTrack', 'search');
+    }, 'SearchTrack');
   }
 
   public static async downloadTrack(id: string): Promise<string> {
@@ -111,8 +98,9 @@ class Hifi {
         },
         timeout: 30000
       });
-      return result.data[2].OriginalTrackUrl;
-    }, 'DownloadTrack', 'download');
+      const manifest: any = JSON.parse(atob(result.data.data.manifest));
+      return manifest.urls[0];
+    }, 'DownloadTrack');
   }
 
   public static async downloadAlbum(id: string): Promise<Album> {
@@ -121,9 +109,10 @@ class Hifi {
         headers: this.DEFAULT_HEADERS,
         params: { id }
       });
+      console.log(result.data.data)
 
-      return this.parseAlbum(result.data?.[0]);
-    }, 'DownloadAlbum', 'download');
+      return this.parseAlbum(result.data.data);
+    }, 'DownloadAlbum');
   }
 
   public static async searchArtistAlbums(id: string): Promise<Album[]> {
@@ -133,11 +122,11 @@ class Hifi {
         params: { f: id }
       });
 
-      const data = result.data?.[0]?.rows?.[0]?.modules?.find((m: any) => m.type === 'ALBUM_LIST');
+      const data = result.data.albums?.rows?.[0]?.modules?.find((m: any) => m.type === 'ALBUM_LIST');
       const items = data?.pagedList?.items || [];
       const albums = await Promise.all(items.map((album: any) => this.parseAlbum(album)));
       return this.removeDoubleAlbums(albums.filter(Boolean) as Album[]);
-    }, 'SearchArtistAlbums', 'search');
+    }, 'SearchArtistAlbums');
   }
 
   public static async searchAlbumTracks(id: string): Promise<Track[]> {
@@ -147,10 +136,10 @@ class Hifi {
         params: { id }
       });
 
-      const items = result.data?.[1]?.items || [];
+      const items = result.data.data?.items || [];
       const tracks = await Promise.all(items.map((t: any) => this.parseTrack(t.item)));
       return tracks.filter(Boolean).sort((a, b) => a.volumeNr - b.volumeNr || a.trackNr - b.trackNr);
-    }, 'SearchAlbumTracks', 'search');
+    }, 'SearchAlbumTracks');
   }
 
   private static parseAlbum(album: any): Album {
@@ -181,8 +170,7 @@ class Hifi {
       explicit: track?.explicit,
       type: 'album',
       version: track?.version || '',
-      album: track?.album?.title || track?.album,
-      album_id: track?.album?.id || track?.album_id,
+      album: this.parseAlbum(track.album),
       artist: track?.artist?.name || track?.artist,
       copyright: track?.copyright,
       artwork: track?.album?.cover ? `https://resources.tidal.com/images/${track.album.cover.replaceAll('-', '/')}/640x640.jpg` : undefined

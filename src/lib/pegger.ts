@@ -19,8 +19,12 @@ export const PegTheFile = async (
       timeout: 30000 
     });
     fs.writeFileSync(coverPath, response.data);
-    tempFile = path.join(tmpdir(), `track-${Date.now()}.flac`);
-    console.warn(filePath, metadata)
+
+    console.warn('retrieving extension from ', filePath)
+    const extension:string = filePath.split(".").pop()||".flac";
+    console.warn('Retrieved extension, ', extension)
+    tempFile = path.join(tmpdir(), `track-${Date.now()}.${extension}`);
+    console.info(filePath, metadata, tempFile)
     
     const metadataArgs = Object.entries(metadata)
       .map(([k, v]) => {
