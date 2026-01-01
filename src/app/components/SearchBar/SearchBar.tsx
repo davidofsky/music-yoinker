@@ -2,6 +2,7 @@
 import { Album, Artist, Track } from "@/lib/interfaces";
 import axios from "axios";
 import { useRef, Dispatch, SetStateAction, useContext, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {FaSearch} from 'react-icons/fa'
 import { LoadingCtx } from "@/app/context";
 import { BrowseMode } from "../Browser/Browser"
@@ -17,8 +18,16 @@ type Props = {
 
 const SearchBar = (props: Props) => {
   const [_loading, setLoading ]= useContext(LoadingCtx)!;
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const searchRef = useRef<HTMLInputElement>(null);
-  useEffect(() => { searchRef.current?.focus(); }, []);
+  useEffect(() => {
+    searchRef.current?.focus();
+    const query = searchParams.get('q');
+    if (query && searchRef.current) {
+      searchRef.current.value = query;
+    }
+  }, [searchParams]);
 
   const stateSetterConfig = {
     [BrowseMode.Albums]: { endpoint: "/api/albums", setter: props.setAlbums },
@@ -31,6 +40,8 @@ const SearchBar = (props: Props) => {
     const query = searchRef.current.value;
     if (query.trim().length === 0) return;
     setLoading(true);
+
+    router.push(`?q=${encodeURIComponent(query)}`);
 
     const { endpoint, setter } = stateSetterConfig[props.browseMode];
     const result = await axios.get(endpoint, { params: { query } });
