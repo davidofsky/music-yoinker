@@ -5,6 +5,8 @@ Search for music using the [TIDAL API](https://tidal-music.github.io/tidal-api-r
 Copy the `example.env` file to `.env` and fill in the required environment variables. If you use docker-compose, you can also copy `docker-compose.example.yml` to `docker-compose.yml`, it will use the `.env` file automatically.
 
 ## .env variables
+- `TIDAL_CLIENT_ID`: Your TIDAL API client ID. Can be fetched after creating an account and app [here](https://developer.tidal.com/dashboard/create).
+- `TIDAL_CLIENT_SECRET`: Your TIDAL API client secret.
 - `HOST_MUSIC_DIRECTORY`: The absolute path to your music directory on the host machine.
 - `DOWNLOAD_SOURCES`: Comma-separated list of download source URLs.
 - `SEARCH_SOURCES`: Comma-separated list of search source URLs.
