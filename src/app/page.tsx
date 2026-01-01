@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Browser from "./components/Browser/Browser";
 import { LoadingCtx, OpenAlbumCtx, OpenQueueCtx, OpenArtistCtx } from "./context"
 import { Artist, DisplayItem } from "@/lib/interfaces";
@@ -20,7 +20,10 @@ export default function Home() {
               <AlbumViewer />
               <ArtistViewer />
               <Queue />
-              <Browser />
+
+              <Suspense fallback={<div>Loading...</div>}>
+                <Browser />
+              </Suspense>
 
             </LoadingCtx.Provider>
           </OpenQueueCtx.Provider>
