@@ -114,7 +114,7 @@ class Downloader {
     try {
       console.info(`Downloading track: ${track.title}`);
       const blobUrl = await Hifi.downloadTrack(track.id);
-      const releaseDate = Tidal.getReleaseData(track.album.id);
+      const tidalAlbum = Tidal.getAlbum(track.album.id);
 
       console.debug('retrieving blob', blobUrl)
       const response = await axios.get(blobUrl, {
@@ -148,9 +148,11 @@ class Downloader {
       const titleJoin = prefix ? this.TRACK_TITLE_SEPARATOR : '';
       const fileName = `${prefix}${titleJoin}${sanitizedTitle}${version}${extension}`;
 
+      const tidalAlbumResult = await tidalAlbum;
+
       const albumDir = path.join(
         process.env.MUSIC_DIRECTORY || "",
-        this.sanitizeFilename(track.artist),
+        this.sanitizeFilename(tidalAlbumResult.albumArtist),
         this.sanitizeFilename(track.album.title || track.title)
       );
 
@@ -165,11 +167,13 @@ class Downloader {
 
       fs.mkdirSync(albumDir, { recursive: true });
 
+
       const tempFile = await PegTheFile(filePath, {
         title: track.title + version,
-        artist: track.artist,
-        date: (await releaseDate),
         album: track.album.title || "",
+        artist: track.artist,
+        date: tidalAlbumResult.date,
+        albumArtist: tidalAlbumResult.albumArtist,
         isrc: track.isrc || "",
         copyright: track.copyright || "",
         discNumber: track.volumeNr?.toString() || "",
