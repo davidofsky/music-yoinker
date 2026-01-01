@@ -1,7 +1,7 @@
 import { Album } from "@/lib/interfaces";
 
 import "./TinyAlbum.css"
-import { FaEye } from "react-icons/fa";
+import { FaEye, FaCheckCircle } from "react-icons/fa";
 import { useContext } from "react";
 import { LoadingCtx, OpenAlbumCtx } from "@/app/context";
 import axios from "axios";
@@ -17,7 +17,15 @@ const TinyAlbum = ({album}: Props) => {
     <div className="TinyAlbum">
       <img className="AlbumArtwork" src={album.artwork} alt={album.title} loading="lazy" />
       <div>
-        <p className="AlbumTitle">{album.title} ({album.releaseDate.split('-')[0]})</p>
+        <p className="AlbumTitle">
+          {album.title} ({album.releaseDate.split('-')[0]})
+          {album.isDownloaded && (
+            <FaCheckCircle
+              className="DownloadedIcon"
+              title="Downloaded"
+            />
+          )}
+        </p>
         <p className="AlbumArtist">{album.artists[0].name}</p>
       </div>
       <button className="HoverButtonGreen"
