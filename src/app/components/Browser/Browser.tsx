@@ -66,6 +66,7 @@ const Browser = () => {
       title: `${album.title} (${album.releaseDate.split("-")[0]})`,
       borderColor: "#aaa",
       gradient: "linear-gradient(145deg, "+album.color+", #000000)",
+      isDownloaded: album.isDownloaded,
       onClick: (async () => {
         setLoading(true)
         const result = await axios.get("/api/album", {

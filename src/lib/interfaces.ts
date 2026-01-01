@@ -5,6 +5,7 @@ export interface Album {
   artwork: string
   artists: Artist[]
   color: string
+  isDownloaded?: boolean
 }
 
 export interface Track {

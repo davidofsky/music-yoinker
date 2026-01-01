@@ -2,7 +2,7 @@ import fs from 'fs';
 import tmp from 'tmp';
 import axios, { AxiosError } from "axios";
 import path from 'path';
-import { Track } from "./interfaces";
+import { Track, Album } from "./interfaces";
 import Tidal from "./tidal"
 import { broadcast } from './websocket';
 import { PegTheFile } from './pegger';
@@ -47,6 +47,31 @@ class Downloader {
     return (isNaN(seconds) ? 3600 : seconds) * 1000;
   }
   public static GetQueue = () => { return this.queue }
+
+  public static async IsAlbumDownloaded(album: Album): Promise<boolean> {
+    try {
+      if (!album.artists || album.artists.length === 0) {
+        return false;
+      }
+
+      const musicDir = process.env.MUSIC_DIRECTORY || "";
+      const artistName = this.sanitizeFilename(album.artists[0].name);
+      const albumTitle = this.sanitizeFilename(album.title);
+      const albumDir = path.join(musicDir, artistName, albumTitle);
+
+      if (!fs.existsSync(albumDir)) {
+        return false;
+      }
+
+      const files = fs.readdirSync(albumDir);
+      const hasAudioFiles = files.some(file => file.endsWith('.flac') || file.endsWith('.mp4') || file.endsWith('.mp3'));
+
+      return hasAudioFiles;
+    } catch (err) {
+      console.error('[IsAlbumDownloaded] Error checking if album is downloaded:', err);
+      return false;
+    }
+  }
 
   private static formatTrackNumber(value?: number | string) {
     if (!value) return '';
@@ -121,11 +146,11 @@ class Downloader {
         responseType: 'arraybuffer',
         timeout: 60000 // Longer timeout for actual download
       }).then((e) => { console.debug('retrieved blob'); return e; });
-      
+
       const contentType = response.headers['content-type'];
 
       let extension = '.flac'
-      if (contentType.includes('audio/mp4')) extension = '.mp4'; 
+      if (contentType.includes('audio/mp4')) extension = '.mp4';
       else if (contentType.includes('audio/mp3')) extension = '.mp3';
 
       tmpFile = tmp.fileSync({ postfix: extension });

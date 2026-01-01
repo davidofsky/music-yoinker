@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
 import { motion } from 'motion/react'
+import { FaCheckCircle } from 'react-icons/fa';
 import './ChromaGrid.css';
 
 export interface ChromaItem {
@@ -12,6 +13,7 @@ export interface ChromaItem {
   borderColor?: string;
   gradient?: string;
   onClick: () => void;
+  isDownloaded?: boolean;
 }
 
 export interface ChromaGridProps {
@@ -124,6 +126,11 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
         >
           <div className="chroma-img-wrapper">
             <img src={c.image} alt={c.title} loading="lazy" />
+            {c.isDownloaded && (
+              <div className="chroma-downloaded-badge">
+                <FaCheckCircle className="chroma-downloaded-icon" />
+              </div>
+            )}
           </div>
           <footer className="chroma-info">
             <h3 className="name">{c.title}</h3>
