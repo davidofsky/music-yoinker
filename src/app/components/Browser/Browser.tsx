@@ -1,5 +1,6 @@
 "use client"
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import SearchBar from "../SearchBar/SearchBar";
 import { Album, Artist, Track } from "@/lib/interfaces";
 import ChromaGrid, { ChromaItem } from "../../reactbits/ChromaGrid";
@@ -19,11 +20,44 @@ const Browser = () => {
   const [openArtist, setOpenArtist] = useContext(OpenArtistCtx)!;
   const [openQueue]= useContext(OpenQueueCtx)!;
   const [loading, setLoading] = useContext(LoadingCtx)!;
+  const searchParams = useSearchParams();
 
   const [browseMode, setBrowseMode] = useState<BrowseMode>(BrowseMode.Albums)
   const [albums, setAlbums] = useState<Array<Album>>([])
   const [tracks, setTracks] = useState<Array<Track>>([])
   const [artists, setArtists] = useState<Array<Artist>>([])
+
+  useEffect(() => {
+    const query = searchParams.get('q');
+    if (query) {
+      performSearch(query, browseMode);
+    }
+  }, []);
+
+  useEffect(() => {
+    const query = searchParams.get('q');
+    if (query) {
+      performSearch(query, browseMode);
+    }
+  }, [browseMode]);
+
+  const performSearch = async (query: string, mode: BrowseMode) => {
+    setLoading(true);
+    const stateSetterConfig = {
+      [BrowseMode.Albums]: { endpoint: "/api/albums", setter: setAlbums },
+      [BrowseMode.Tracks]: { endpoint: "/api/tracks", setter: setTracks },
+      [BrowseMode.Artists]: { endpoint: "/api/artists", setter: setArtists }
+    };
+
+    const { endpoint, setter } = stateSetterConfig[mode];
+    try {
+      const result = await axios.get(endpoint, { params: { query } });
+      setter(result.data);
+    } catch (error) {
+      console.error("Search failed:", error);
+    }
+    setLoading(false);
+  }
 
   const AlbumToCI = (album: Album) : ChromaItem => {
     return {
@@ -88,10 +122,10 @@ const Browser = () => {
           Music Yoinker
         </h1>
 
-        <SearchBar 
-          browseMode={browseMode} 
-          setAlbums={setAlbums} 
-          setTracks={setTracks} 
+        <SearchBar
+          browseMode={browseMode}
+          setAlbums={setAlbums}
+          setTracks={setTracks}
           setArtists={setArtists}/>
         <br/>
         <p>
