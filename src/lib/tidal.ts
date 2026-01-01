@@ -1,8 +1,9 @@
 import axios from "axios";
 
-type AlbumRelease = {
+type TidalAlbum = {
   id: string,
   date: string
+  albumArtist: string
 }
 
 export default class Tidal {
@@ -10,7 +11,7 @@ export default class Tidal {
   private static COUNTRY = 'US';
 
   private static readonly MAX_MEMORIZED_ALBUMS = 5;
-  private static albumReleases: AlbumRelease[] = [];
+  private static tidalAlbums: TidalAlbum[] = [];
   
   private static authToken = "";
   private static tokenExpiry: number = 0;
@@ -49,9 +50,9 @@ export default class Tidal {
     return !this.authToken || Date.now() + 10000 >= this.tokenExpiry;
   }
 
-  public static async getReleaseData(albumId: string, firstAttempt = true) {
-    const memory = this.albumReleases.find(a => a.id === albumId);
-    if (memory) return memory.date;
+  public static async getAlbum(albumId: string, firstAttempt = true) : Promise<TidalAlbum> {
+    const memory = this.tidalAlbums.find(a => a.id === albumId);
+    if (memory) return memory;
 
     if (this.isTokenExpired()) {
       await this.getAuthToken();
@@ -63,25 +64,32 @@ export default class Tidal {
           "accept": "application/vnd.api+json",
           "authorization": `Bearer ${this.authToken}`
         },
-        params: { countryCode: this.COUNTRY }
+        params: { 
+          countryCode: this.COUNTRY,
+          include: "artists"
+        }
       });
 
-      const release = result.data.data.attributes.releaseDate;
-      
-      this.albumReleases.push({ id: albumId, date: release });
-      if (this.albumReleases.length > this.MAX_MEMORIZED_ALBUMS) {
-        this.albumReleases.shift();
+      const tidalAlbum: TidalAlbum = {
+        id: albumId,
+        date: result.data.data.attributes.releaseDate,
+        albumArtist: result.data.included.find((i:any) => i.type ="artists").attributes.name
       }
       
-      return release;
+      this.tidalAlbums.push(tidalAlbum);
+      if (this.tidalAlbums.length > this.MAX_MEMORIZED_ALBUMS) {
+        this.tidalAlbums.shift();
+      }
+      
+      return tidalAlbum;
     } catch (e) {
       if (axios.isAxiosError(e) && e.response?.status === 401 && firstAttempt) {
         console.warn(`401 Unauthorized for album ${albumId}.`);
         await this.getAuthToken();
-        return this.getReleaseData(albumId, false); 
+        return this.getAlbum(albumId, false); 
       }
 
-      console.error(`Error fetching album releasedate with ID ${albumId}:`, e);
+      console.error(`Error fetching album from Tidal with ID ${albumId}:`, e);
       throw e;
     }
   }
