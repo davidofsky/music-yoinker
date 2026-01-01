@@ -1,4 +1,3 @@
-import { AnimatePresence, motion } from "motion/react"
 import "./ArtistViewer.css"
 import { FaXmark } from "react-icons/fa6"
 
@@ -7,12 +6,13 @@ import { useContext, useEffect, useState } from "react"
 import axios from "axios"
 import { Album } from "@/lib/interfaces"
 import TinyAlbum from "../TinyAlbum/TinyAlbum"
+import Modal from "../Modal/Modal"
 
 
 const ArtistViewer = () => {
   const [loading, setLoading] = useContext(LoadingCtx)!;
   const [openArtist, setOpenArtist] = useContext(OpenArtistCtx)!
-  const [openAlbum, setOpenAlbum] = useContext(OpenAlbumCtx)!
+  const [openAlbum] = useContext(OpenAlbumCtx)!
   const [albums, setAlbums] = useState<Array<Album>>([])
   const closeAction = () => setOpenArtist(null);
 
@@ -31,47 +31,27 @@ const ArtistViewer = () => {
   }
 
   return (
-    <AnimatePresence>
-    {openArtist && !openAlbum && !loading &&
-      <div className="ModalBackground" onClick={closeAction}>
-        <motion.div
-          className="Modal"
-          initial={{ opacity: 0, scale:.8 }}
-          animate={{
-            opacity: 1,
-            scale: 1,
-            transition: {
-              default: {type: "tween"},
-              opacity: {ease: "linear"}
-            }
-          }}
-          exit=   {{ opacity: 0, scale:.8}}
-          onClick={(e) => e.stopPropagation()}
-        >
-        <h1 className="ModalTitle">{openArtist.name}</h1>
+    <Modal isOpen={!!openArtist && !openAlbum && !loading} onClose={closeAction}>
+      <h1 className="ModalTitle">{openArtist?.name}</h1>
 
-
-        <h1>Albums</h1>
-        <div className="AlbumList">
+      <h1>Albums</h1>
+      <div className="AlbumList">
         {albums.map(album => {
           return (
             <TinyAlbum key={album.id} album={album}/>
           )
         })}
-        </div>
-
-        <div className="ModalFooter">
-          <button
-            className="HoverButtonRed"
-            onClick={closeAction}>
-            <FaXmark/>
-            Close page
-          </button>
-        </div>
-        </motion.div>
       </div>
-    }
-    </AnimatePresence>
+
+      <div className="ModalFooter">
+        <button
+          className="HoverButtonRed"
+          onClick={closeAction}>
+          <FaXmark/>
+          Close page
+        </button>
+      </div>
+    </Modal>
   )
 }
 
