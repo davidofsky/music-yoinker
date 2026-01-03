@@ -5,6 +5,7 @@ import SearchBar from "../SearchBar/SearchBar";
 import { Album, Artist, Track } from "@/lib/interfaces";
 import ChromaGrid, { ChromaItem } from "../../reactbits/ChromaGrid";
 import { OpenQueueCtx, OpenAlbumCtx, LoadingCtx, OpenArtistCtx } from "@/app/context";
+import { useOpenAlbum } from "@/app/hooks/useOpenAlbum";
 
 import "./Browser.css"
 import axios from "axios";
@@ -15,11 +16,19 @@ export enum BrowseMode {
   Artists
 }
 
+const CHROMA_GRID_CONFIG = {
+  damping: 0.45,
+  fadeOut: 0.6,
+  ease: "power3.out" as const,
+  columns: 4
+}
+
 const Browser = () => {
   const [openAlbum, setOpenAlbum] = useContext(OpenAlbumCtx)!;
   const [openArtist, setOpenArtist] = useContext(OpenArtistCtx)!;
-  const [openQueue]= useContext(OpenQueueCtx)!;
+  const [openQueue] = useContext(OpenQueueCtx)!;
   const [loading, setLoading] = useContext(LoadingCtx)!;
+  const { openAlbum: openAlbumFromHook } = useOpenAlbum();
   const searchParams = useSearchParams();
 
   const [browseMode, setBrowseMode] = useState<BrowseMode>(BrowseMode.Albums)
@@ -66,21 +75,8 @@ const Browser = () => {
       title: `${album.title} (${album.releaseDate.split("-")[0]})`,
       borderColor: "#aaa",
       gradient: "linear-gradient(145deg, "+album.color+", #000000)",
-      onClick: (async () => {
-        setLoading(true)
-        const result = await axios.get("/api/album", {
-          params: { id: album.id }
-        })
-        setLoading(false)
-
-        setOpenAlbum({
-          Title: album.title,
-          Artist: album.artists[0].name,
-          Type: "Album",
-          Tracks: result.data,
-          ReleaseDate: album.releaseDate
-        });
-      })
+      isDownloaded: album.isDownloaded,
+      onClick: () => openAlbumFromHook(album)
     }
   }
 
@@ -102,8 +98,8 @@ const Browser = () => {
     }
   }
 
- const ArtistToCI = (artist: Artist) : ChromaItem => {
-   return {
+  const ArtistToCI = (artist: Artist) : ChromaItem => {
+    return {
       image: artist.picture,
       subtitle: "",
       title: artist.name,
@@ -112,8 +108,19 @@ const Browser = () => {
       onClick: (() => {
         setOpenArtist(artist);
       })
-   }
- }
+    }
+  }
+
+  const getItemsForMode = (): ChromaItem[] => {
+    switch (browseMode) {
+      case BrowseMode.Albums:
+        return albums.map(AlbumToCI);
+      case BrowseMode.Tracks:
+        return tracks.map(TrackToCI);
+      case BrowseMode.Artists:
+        return artists.map(ArtistToCI);
+    }
+  }
 
   return (
     <div>
@@ -151,42 +158,16 @@ const Browser = () => {
           </select>
         </p>
 
-        {(browseMode === BrowseMode.Albums) &&
-          <div>
-            <br/>
-            <ChromaGrid
-              items={albums.map(AlbumToCI)}
-              damping={0.45}
-              fadeOut={0.6}
-              ease="power3.out"
-              columns={4}
-            />
-          </div>
-        }
-        {(browseMode === BrowseMode.Tracks) &&
-          <div>
-            <br/>
-            <ChromaGrid
-              items={tracks.map(TrackToCI)}
-              damping={0.45}
-              fadeOut={0.6}
-              ease="power3.out"
-              columns={4}
-            />
-          </div>
-        }
-        {(browseMode === BrowseMode.Artists) &&
-          <div>
-            <br/>
-            <ChromaGrid
-              items={artists.map(ArtistToCI)}
-              damping={0.45}
-              fadeOut={0.6}
-              ease="power3.out"
-              columns={4}
-            />
-          </div>
-        }
+        <div>
+          <br/>
+          <ChromaGrid
+            items={getItemsForMode()}
+            damping={CHROMA_GRID_CONFIG.damping}
+            fadeOut={CHROMA_GRID_CONFIG.fadeOut}
+            ease={CHROMA_GRID_CONFIG.ease}
+            columns={CHROMA_GRID_CONFIG.columns}
+          />
+        </div>
       </div>
 
     </div>

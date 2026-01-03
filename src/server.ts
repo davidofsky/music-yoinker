@@ -24,7 +24,18 @@ app.prepare().then(() => {
 
     try {
       const result = await Hifi.searchAlbum(query);
-      res.json(result);
+
+      const albumsWithStatus = await Promise.all(
+        result.map(async (album) => {
+          const isDownloaded = await Downloader.IsAlbumDownloaded(album);
+          return {
+            ...album,
+            isDownloaded
+          };
+        })
+      );
+
+      res.json(albumsWithStatus);
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Search failed' });
@@ -84,7 +95,18 @@ app.prepare().then(() => {
 
     try {
       const result = await Hifi.searchArtistAlbums(id);
-      res.json(result);
+
+      const albumsWithStatus = await Promise.all(
+        result.map(async (album) => {
+          const isDownloaded = await Downloader.IsAlbumDownloaded(album);
+          return {
+            ...album,
+            isDownloaded
+          };
+        })
+      );
+
+      res.json(albumsWithStatus);
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Retrieve failed' });
