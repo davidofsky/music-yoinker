@@ -1,11 +1,48 @@
 services:
+  feishin:
+    container_name: feishin
+    image: 'ghcr.io/jeffvli/feishin:latest'
+    environment:
+      - SERVER_NAME=navidrome # pre defined server name
+      - SERVER_LOCK=true # When true AND name/type/url are set, only username/password can be toggled
+      - SERVER_TYPE=navidrome # navidrome also works
+      - SERVER_URL=http://localhost:4533 # http://address:port
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+      - TZ=America/Los_Angeles
+    ports:
+      - 9180:9180
+    restart: unless-stopped
+  redis:
+    image: docker.io/bitnami/redis:8.4
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+    ports:
+      - '6379:6379'
+    volumes:
+      - 'redis_data:/bitnami/redis/data'
   yoinker:
     container_name: music-yoinker
     build: .
     ports:
-      - ${FRONTEND_PORT}:${BACKEND_PORT}
+      - 3000:3000
     restart: unless-stopped
     env_file:
       - .env
     volumes:
-      - ${HOST_MUSIC_DIRECTORY}:${MUSIC_DIRECTORY}:rw
+      - ./music:/app/music:rw
+  navidrome:
+    container_name: navidrome
+    image: deluan/navidrome:0.59.0
+    environment:
+      - ND_SCANINTERVAL=1h
+      - ND_LOGLEVEL=info
+    volumes:
+      - ./music:/music:ro
+      - ./data:/data
+    ports:
+      - "4533:4533"
+    restart: unless-stopped
+

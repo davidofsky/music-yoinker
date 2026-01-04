@@ -16,10 +16,6 @@ class Hifi {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  private static getNextSource(sources: string[]): number {
-    return (this.hifiSource + 1) % sources.length;
-  }
-
   private static async retryWithSourceCycle<T>(
     operation: (sourceUrl: string) => Promise<T>,
     operationName: string,
