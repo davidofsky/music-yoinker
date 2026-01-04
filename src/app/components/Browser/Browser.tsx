@@ -147,13 +147,13 @@ const Browser = () => {
             }
           }}>
             <option value="albums">
-              <span>Albums</span>
+              Albums
             </option>
             <option value="singles">
-              <span>Singles</span>
+            Singles
             </option>
             <option value="artists">
-              <span>Artists</span>
+            Artists
             </option>
           </select>
         </p>
