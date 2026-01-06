@@ -4,7 +4,7 @@ import axios, { AxiosError } from "axios";
 import path from 'path';
 import { Track, Album } from "./interfaces";
 import Tidal from "./tidal"
-import { broadcast } from './websocket';
+import { broadcastQueue } from '@/lib/broadcast';
 import { PegTheFile } from './pegger';
 import Hifi from './hifi'
 
@@ -82,12 +82,7 @@ class Downloader {
 
   public static AddToQueue(tracks: Track[]) {
     this.queue.push(...tracks);
-
-    broadcast({
-      type: 'queue',
-      message: JSON.stringify(this.queue)
-    });
-
+    broadcastQueue(this.queue);
     this.download().catch(err => {
       console.error("Queue processing error:", err);
     });
@@ -100,7 +95,7 @@ class Downloader {
     if (index === -1) return `Queue does not contain track with id: ${trackId}.`;
     if (index === 0) return `Track with id ${trackId} is currently being processed.`;
     this.queue.splice(index, 1);
-    broadcast({ type: 'queue', message: JSON.stringify(this.queue) });
+    broadcastQueue(this.queue);
     return null
   }
 
@@ -125,7 +120,7 @@ class Downloader {
         }
 
         this.queue.shift();
-        broadcast({ type: 'queue', message: JSON.stringify(this.queue) });
+        broadcastQueue(this.queue);
       }
     } finally {
       this.processing = false;
