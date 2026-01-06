@@ -13,6 +13,10 @@ export function removeClient(clientId: string) {
   clientControllers.delete(clientId);
 }
 
+/*
+ * Retrieve all clients from redis and enqueue the track array
+ * If an error occurs, the client should be removed from the list
+ */
 export async function broadcastQueue(queue: Track[]) {
   const queueStr = JSON.stringify({ queue });
   
