@@ -17,6 +17,6 @@ services:
     env_file:
       - .env
     volumes:
-      - ./music:/app/music:rw
+      - ${HOST_MUSIC_DIRECTORY}:${MUSIC_DIRECTORY}:rw
 volumes:
   redis_data:
