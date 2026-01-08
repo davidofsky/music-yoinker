@@ -1,16 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
 import { Album, Artist, Track } from './interfaces';
+import Config from './config';
 
 class Hifi {
   private static readonly DEFAULT_HEADERS = { accept: 'application/vnd.api+json' };
   private static maxRetries = 3;
-  private static retryDelay = 2000; // 2 seconds between retries
+  private static retryDelayInMs = 2000;
   private static hifiSource = 0;
-
-  private static getHifiSources(): string[] {
-    return (process.env.HIFI_SOURCES || '').split(',').map(s => s.trim()).filter(Boolean);
-  }
 
   private static sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -20,7 +17,7 @@ class Hifi {
     operation: (sourceUrl: string) => Promise<T>,
     operationName: string,
   ): Promise<T> {
-    const sources = this.getHifiSources();
+    const sources = Config.HIFI_SOURCES;
     const totalAttempts = sources.length * this.maxRetries;
     let lastError: any = null;
 
@@ -37,7 +34,7 @@ class Hifi {
         this.hifiSource = (this.hifiSource + 1) % sources.length;
 
         if (attempt < totalAttempts - 1) {
-          await this.sleep(this.retryDelay);
+          await this.sleep(this.retryDelayInMs);
         }
       }
     }

@@ -1,4 +1,5 @@
 import axios from "axios";
+import Config from "./config";
 
 type TidalAlbum = {
   id: string,
@@ -12,16 +13,16 @@ export default class Tidal {
 
   private static readonly MAX_MEMORIZED_ALBUMS = 5;
   private static tidalAlbums: TidalAlbum[] = [];
-  
+
   private static authToken = "";
   private static tokenExpiry: number = 0;
 
   private static async getAuthToken() {
     console.info("Retrieving authentication token from Tidal");
-    
-    const credentials = btoa(`${process.env.TIDAL_CLIENT_ID}:${process.env.TIDAL_CLIENT_SECRET}`);
-    
-    const result = await axios.post('https://auth.tidal.com/v1/oauth2/token', 
+
+    const credentials = btoa(`${Config.TIDAL_CLIENT_ID}:${Config.TIDAL_CLIENT_SECRET}`);
+
+    const result = await axios.post('https://auth.tidal.com/v1/oauth2/token',
       new URLSearchParams({ grant_type: "client_credentials" }).toString(),
       {
         headers: {
@@ -64,7 +65,7 @@ export default class Tidal {
           "accept": "application/vnd.api+json",
           "authorization": `Bearer ${this.authToken}`
         },
-        params: { 
+        params: {
           countryCode: this.COUNTRY,
           include: "artists"
         }
@@ -75,18 +76,18 @@ export default class Tidal {
         date: result.data.data.attributes.releaseDate,
         albumArtist: result.data.included.find((i:any) => i.type ="artists").attributes.name
       }
-      
+
       this.tidalAlbums.push(tidalAlbum);
       if (this.tidalAlbums.length > this.MAX_MEMORIZED_ALBUMS) {
         this.tidalAlbums.shift();
       }
-      
+
       return tidalAlbum;
     } catch (e) {
       if (axios.isAxiosError(e) && e.response?.status === 401 && firstAttempt) {
         console.warn(`401 Unauthorized for album ${albumId}.`);
         await this.getAuthToken();
-        return this.getAlbum(albumId, false); 
+        return this.getAlbum(albumId, false);
       }
 
       console.error(`Error fetching album from Tidal with ID ${albumId}:`, e);
