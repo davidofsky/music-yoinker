@@ -103,8 +103,9 @@ class Hifi {
       if (!decodedManifest) {
         throw new Error('[DownloadTrack] Empty manifest received from server');
       } else if (manifestMimeType === 'application/vnd.tidal.bts') {
-        const manifest: any = JSON.parse(decodedManifest);
-        return manifest.urls[0];
+        const parsed: any = JSON.parse(decodedManifest);
+        const url = parsed?.urls?.[0];
+        return { type: 'direct', url, mimeType: manifestMimeType };
       } else if (manifestMimeType === 'application/dash+xml') {
         return this.parseDashManifest(decodedManifest, manifestMimeType);
       } else {
