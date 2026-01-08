@@ -121,20 +121,34 @@ class Downloader {
       const downloadSource: DownloadTrackSource = await Hifi.downloadTrack(track.id);
       const tidalAlbum = Tidal.getAlbum(track.album.id);
 
-      const urls = downloadSource.type === 'dash' ? [downloadSource.initUrl, ...downloadSource.segmentUrls] : [downloadSource.url];
-      const defaultExtension = downloadSource.type === 'dash' ? downloadSource.extension : '.flac';
-
-      const buffers: Buffer[] = [];
+      let extension = '.flac';
       let contentType: string | undefined;
+      let payload: Buffer;
 
-      for (const url of urls) {
-        const response = await axios.get(url, { responseType: 'arraybuffer', timeout: 60000 });
-        if (!contentType) contentType = response.headers['content-type'];
-        buffers.push(Buffer.from(response.data));
+      if (downloadSource.type === 'direct') {
+        console.debug('retrieving blob', downloadSource.url)
+        const response = await axios.get(downloadSource.url, {
+          responseType: 'arraybuffer',
+          timeout: 60000
+        }).then((e) => { console.debug('retrieved blob'); return e; });
+
+        contentType = response.headers['content-type'];
+        extension = this.resolveExtensionFromContentType(contentType, '.flac');
+        payload = Buffer.from(response.data);
+      } else {
+        console.debug('retrieving dash manifest segments', { init: downloadSource.initUrl, segments: downloadSource.segmentUrls.length });
+
+        const buffers: Buffer[] = [];
+        const allUrls = [downloadSource.initUrl, ...downloadSource.segmentUrls];
+        for (const url of allUrls) {
+          const segmentResponse = await axios.get(url, { responseType: 'arraybuffer', timeout: 60000 });
+          if (!contentType) contentType = segmentResponse.headers['content-type'];
+          buffers.push(Buffer.from(segmentResponse.data));
+        }
+
+        payload = Buffer.concat(buffers);
+        extension = downloadSource.extension || this.resolveExtensionFromContentType(contentType, '.mp4');
       }
-
-      const payload = Buffer.concat(buffers);
-      const extension = this.resolveExtensionFromContentType(contentType, defaultExtension);
 
       tmpFile = tmp.fileSync({ postfix: extension });
       const filePath = tmpFile.name;
@@ -174,6 +188,7 @@ class Downloader {
       }
 
       fs.mkdirSync(albumDir, { recursive: true });
+
 
       const tempFile = await PegTheFile(filePath, {
         title: track.title + version,
