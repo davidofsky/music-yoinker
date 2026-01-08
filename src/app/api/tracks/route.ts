@@ -7,10 +7,18 @@ export async function GET(req: Request) {
   if (!query) {
     return NextResponse.json({ error: "Parameter 'query' is required" }, { status: 400 });
   }
-  
+
   try {
     const result = await Hifi.searchTrack(query);
-    return NextResponse.json(result);
+
+    const tracksWithStatus = await Promise.all(
+      result.map(async (track) => {
+        const isDownloaded = await Downloader.IsTrackDownloaded(track);
+        return { ...track, isDownloaded };
+      })
+    );
+
+    return NextResponse.json(tracksWithStatus);
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: 'Search failed' }, { status: 500 });
@@ -20,11 +28,11 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const tracks = await req.json();
-    
+
     if (!Array.isArray(tracks)) {
       return NextResponse.json({ error: 'Invalid tracks data' }, { status: 400 });
     }
-    
+
     Downloader.AddToQueue(tracks);
     return NextResponse.json({ status: 'OK' });
   } catch (err) {
