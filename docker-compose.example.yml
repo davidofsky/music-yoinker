@@ -1,13 +1,4 @@
 services:
-  redis:
-    image: docker.io/bitnami/redis:latest
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
-    ports:
-      - ${REDIS_PORT}:${REDIS_PORT}
-    volumes:
-      - 'redis_data:/bitnami/redis/data'
   yoinker:
     container_name: music-yoinker
     build: .
@@ -18,5 +9,3 @@ services:
       - .env
     volumes:
       - ${HOST_MUSIC_DIRECTORY}:${MUSIC_DIRECTORY}:rw
-volumes:
-  redis_data:

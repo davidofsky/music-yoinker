@@ -7,9 +7,16 @@ export function useQueue() : Track[] {
   useEffect(() => {
     const es = new EventSource('/api/queue/stream');
 
+    es.onopen = () => {
+      console.info("Connected to queue stream")
+    }
+
     es.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-      setQueue(data.queue);
+      console.log(e)
+      if (!e.data) return;
+      const data: typeof queue = JSON.parse(e.data);
+      console.log(data)
+      setQueue(data);
     };
 
     return () => es.close();

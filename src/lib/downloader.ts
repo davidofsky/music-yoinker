@@ -10,12 +10,12 @@ import Hifi from './hifi'
 import Config from './config';
 
 class Downloader {
-  private static queue: Track[] = [];
-  private static processing: boolean = false;
-  private static cleanedAlbumDirs: Map<string, number> = new Map();
-  public static GetQueue = () => { return this.queue };
+  private queue: Track[] = [];
+  private processing: boolean = false;
+  private cleanedAlbumDirs: Map<string, number> = new Map();
+  public GetQueue = () => { return this.queue };
 
-  private static async isArtistAlbumDownloaded(artistName: string, albumTitle: string): Promise<boolean> {
+  private async isArtistAlbumDownloaded(artistName: string, albumTitle: string): Promise<boolean> {
     try {
       const sanitizedArtist = this.sanitizeFilename(artistName);
       const sanitizedAlbum = this.sanitizeFilename(albumTitle);
@@ -33,14 +33,14 @@ class Downloader {
     }
   }
 
-  public static async IsAlbumDownloaded(album: Album): Promise<boolean> {
+  public async IsAlbumDownloaded(album: Album): Promise<boolean> {
     if (!album.artists || album.artists.length === 0) {
       return false;
     }
     return this.isArtistAlbumDownloaded(album.artists[0].name, album.title);
   }
 
-  public static async IsTrackDownloaded(track: Track): Promise<boolean> {
+  public async IsTrackDownloaded(track: Track): Promise<boolean> {
     let artistName: string | undefined;
 
     if (track.album.artists && track.album.artists.length > 0) {
@@ -58,14 +58,14 @@ class Downloader {
     return result;
   }
 
-  private static formatTrackNumber(value?: number | string) {
+  private formatTrackNumber(value?: number | string) {
     if (!value) return '';
     const s = value.toString().trim();
     if (s === '') return '';
     return s.padStart(Config.TRACK_PAD_LENGTH, '0');
   }
 
-  public static AddToQueue(tracks: Track[]) {
+  public AddToQueue(tracks: Track[]) {
     this.queue.push(...tracks);
     broadcastQueue(this.queue);
     this.download().catch(err => {
@@ -74,7 +74,7 @@ class Downloader {
   }
 
   // Returns error message if exists
-  public static RemoveFromQueue(trackId: string): string | null {
+  public RemoveFromQueue(trackId: string): string | null {
     console.log("removing track with id ", trackId)
     const index = this.queue.findIndex(q => q.id.toString() === trackId.toString());
     if (index === -1) return `Queue does not contain track with id: ${trackId}.`;
@@ -84,7 +84,7 @@ class Downloader {
     return null
   }
 
-  private static async download() {
+  private async download() {
     if (this.processing) return;
     if (!this.queue || this.queue.length === 0) return;
 
@@ -113,7 +113,7 @@ class Downloader {
   }
 
 
-  private static async downloadTrack(track: Track) {
+  private async downloadTrack(track: Track) {
     let tmpFile: tmp.FileResult | null = null;
 
     try {
@@ -217,7 +217,7 @@ class Downloader {
     }
   }
 
-  private static removeExistingAlbum(albumDir: string) {
+  private removeExistingAlbum(albumDir: string) {
     const now = Date.now();
     const last = this.cleanedAlbumDirs.get(albumDir);
     const needsCleaning = !last || (now - last) > Config.CLEAN_EXISTING_DOWNLOADS_TTL_MS;
@@ -238,10 +238,17 @@ class Downloader {
     }
   }
 
-  private static sanitizeFilename(name: string): string {
+  private sanitizeFilename(name: string): string {
     return name.replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, ' ').trim();
   }
 }
 
+declare global {
+  var downloader: Downloader;
+}
 
-export default Downloader;
+if (!global.downloader) {
+  global.downloader = new Downloader();
+}
+
+export default global.downloader;
