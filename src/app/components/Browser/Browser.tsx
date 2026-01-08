@@ -87,6 +87,7 @@ const Browser = () => {
       title: track.title,
       borderColor: "#aaa",
       gradient: "linear-gradient(145deg, "+track.album.color+", #000000)",
+      isDownloaded: track.isDownloaded,
       onClick: (() => {
         setOpenAlbum({
           Title: track.album.title,
@@ -146,15 +147,9 @@ const Browser = () => {
               setBrowseMode(BrowseMode.Artists)
             }
           }}>
-            <option value="albums">
-              Albums
-            </option>
-            <option value="singles">
-            Singles
-            </option>
-            <option value="artists">
-            Artists
-            </option>
+            <option value="albums">Albums</option>
+            <option value="singles">Singles</option>
+            <option value="artists">Artists</option>
           </select>
         </p>
 

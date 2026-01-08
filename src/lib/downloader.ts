@@ -15,29 +15,47 @@ class Downloader {
   private static cleanedAlbumDirs: Map<string, number> = new Map();
   public static GetQueue = () => { return this.queue };
 
-  public static async IsAlbumDownloaded(album: Album): Promise<boolean> {
+  private static async isArtistAlbumDownloaded(artistName: string, albumTitle: string): Promise<boolean> {
     try {
-      if (!album.artists || album.artists.length === 0) {
-        return false;
-      }
-
-      const musicDir = Config.MUSIC_DIRECTORY || "";
-      const artistName = this.sanitizeFilename(album.artists[0].name);
-      const albumTitle = this.sanitizeFilename(album.title);
-      const albumDir = path.join(musicDir, artistName, albumTitle);
+      const sanitizedArtist = this.sanitizeFilename(artistName);
+      const sanitizedAlbum = this.sanitizeFilename(albumTitle);
+      const albumDir = path.join(Config.MUSIC_DIRECTORY, sanitizedArtist, sanitizedAlbum);
 
       if (!fs.existsSync(albumDir)) {
         return false;
       }
 
       const files = fs.readdirSync(albumDir);
-      const hasAudioFiles = files.some(file => file.endsWith('.flac') || file.endsWith('.mp4') || file.endsWith('.mp3'));
-
-      return hasAudioFiles;
+      return files.some(file => file.endsWith('.flac') || file.endsWith('.mp4') || file.endsWith('.mp3'));
     } catch (err) {
-      console.error('[IsAlbumDownloaded] Error checking if album is downloaded:', err);
+      console.error('[isArtistAlbumDownloaded] Error checking if album is downloaded:', err);
       return false;
     }
+  }
+
+  public static async IsAlbumDownloaded(album: Album): Promise<boolean> {
+    if (!album.artists || album.artists.length === 0) {
+      return false;
+    }
+    return this.isArtistAlbumDownloaded(album.artists[0].name, album.title);
+  }
+
+  public static async IsTrackDownloaded(track: Track): Promise<boolean> {
+    let artistName: string | undefined;
+
+    if (track.album.artists && track.album.artists.length > 0) {
+      artistName = track.album.artists[0].name;
+    } else if (track.artist) {
+      artistName = track.artist;
+    }
+
+    if (!artistName) {
+      console.debug(`[IsTrackDownloaded] No artist found for track "${track.title}"`);
+      return false;
+    }
+
+    const result = await this.isArtistAlbumDownloaded(artistName, track.album.title);
+    return result;
   }
 
   private static formatTrackNumber(value?: number | string) {
@@ -138,7 +156,7 @@ class Downloader {
       const tidalAlbumResult = await tidalAlbum;
 
       const albumDir = path.join(
-        Config.MUSIC_DIRECTORY || "",
+        Config.MUSIC_DIRECTORY,
         this.sanitizeFilename(tidalAlbumResult.albumArtist),
         this.sanitizeFilename(track.album.title || track.title)
       );
