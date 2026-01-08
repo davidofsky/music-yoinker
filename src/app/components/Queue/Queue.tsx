@@ -4,8 +4,8 @@ import { useQueue } from '@/app/hooks/useQueue';
 import { useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import { FaXmark } from 'react-icons/fa6';
-import { AnimatePresence, motion } from 'motion/react'
 import { LoadingCtx, OpenAlbumCtx, OpenArtistCtx, OpenQueueCtx } from '@/app/context';
+import Modal from '@/app/components/Modal/Modal';
 import "./Queue.css"
 
 const Queue = () => {
@@ -36,60 +36,39 @@ const Queue = () => {
 
   return (
     <>
-      <AnimatePresence>
-        {openQueue && 
-          <motion.div className='ModalBackground'
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setOpenQueue(false)}> 
-            <motion.div className='Modal'
-              initial={{ opacity: 0, scale: 0.8 }} 
-              animate={{ 
-                opacity: 1, 
-                scale: 1,
-                transition: {
-                  default: { type: "tween" },
-                  opacity: { ease: "linear" }
-                }
-              }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              onClick={(e) => e.stopPropagation()}> 
-              Download queue
-              <div className='QueuedList'>
-                {queuedTracks.length === 0 ? (
-                  <p className='EmptyQueue'>Queue is empty</p>
-                ) : (
-                  queuedTracks.map((track, i) => (
-                    <div className='QueuedItem' key={track.id}>
-                      {i === 0 ? <FaDownload/> : <FaHourglass/>}
-                      <p>{track.title}</p>
-                      {i > 0 && (
-                        <FaTrash 
-                          className='CancelQueue' 
-                          onClick={() => removeTrack(track.id)}
-                        />
-                      )}
-                    </div>
-                  ))
+      <Modal isOpen={openQueue} onClose={() => setOpenQueue(false)}>
+        <span>Download queue</span>
+        <div className='QueuedList'>
+          {queuedTracks.length === 0 ? (
+            <p className='EmptyQueue'>Queue is empty</p>
+          ) : (
+            queuedTracks.map((track, i) => (
+              <div className={`QueuedItem ${i === 0 ? 'downloading' : ''}`} key={track.id}>
+                {i === 0 ? <FaDownload/> : <FaHourglass/>}
+                <p>{track.title}</p>
+                {i > 0 && (
+                  <FaTrash
+                    className='CancelQueue'
+                    onClick={() => removeTrack(track.id)}
+                  />
                 )}
               </div>
-              <div className='ModalFooter'>
-                <button 
-                  className="HoverButtonRed"
-                  onClick={() => setOpenQueue(false)}>
-                  <FaXmark/>
-                  Close page
-                </button>
-              </div>
-            </motion.div> 
-          </motion.div> 
-        }
-      </AnimatePresence>
-      <div 
-        className={`Queue ${loading || openAlbum || openQueue || openArtist ? 'blur' : ''}`} 
+            ))
+          )}
+        </div>
+        <div className='ModalFooter'>
+          <button
+            className="HoverButtonRed"
+            onClick={() => setOpenQueue(false)}>
+            <FaXmark/>
+            Close page
+          </button>
+        </div>
+      </Modal>
+      <div
+        className={`Queue ${loading || openAlbum || openQueue || openArtist ? 'blur' : ''}`}
         onClick={() => setOpenQueue(true)}>
-        <FaTasks/> 
+        <FaTasks/>
         {currentDownload ? (
           <p>{currentDownload}</p>
         ) : (
