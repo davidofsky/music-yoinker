@@ -27,14 +27,6 @@ class Config {
     return process.env.HOST_MUSIC_DIRECTORY || '';
   }
 
-  static get REDIS_HOST(): string {
-    return process.env.REDIS_HOST || 'localhost';
-  }
-
-  static get REDIS_PORT(): number {
-    return validateNumber(process.env.REDIS_PORT, 6379);
-  }
-
   static get CLEAN_EXISTING_DOWNLOADS(): boolean {
     return (process.env.CLEAN_EXISTING_DOWNLOADS || 'false').toLowerCase() === 'true';
   }

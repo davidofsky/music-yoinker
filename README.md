@@ -8,19 +8,16 @@ It is intended to be used alongside self-hosted music servers such as **Navidrom
 - Audio downloads are handled via **hifi-api**
 - Some metadata (e.g. album artist) is retrieved directly from **TIDAL**
 - Downloads are processed through a queue
-- **Redis** is used to persist sessions for Server-Sent Events
 - **ffmpeg** is used to embed metadata and cover art into the final FLAC files
 - The UI is designed to be **mobile-friendly** and straightforward 
 
 ## Tech Stack
 - **Next.js**
 - **TypeScript**
-- **Redis**
 
 ## Requirements
 
 - **ffmpeg** (required for embedding metadata and cover art)
-- **Redis** (required for persisting SSE sessions)
 - **hifi-api**
 - [TIDAL developer account](https://developer.tidal.com/documentation) (used for downloads and metadata)
 
@@ -30,8 +27,6 @@ Copy the `example.env` file to `.env` and fill in the required environment varia
 ### .env variables
 - `TIDAL_CLIENT_ID`: Your TIDAL API client ID. Can be fetched after creating an account and app [here](https://developer.tidal.com/dashboard/create).
 - `TIDAL_CLIENT_SECRET`: Your TIDAL API client secret.
-- `REDIS_HOST` Host of the Redis instance
-- `REDIS_PORT` Port of the Redis instance
 - `HOST_MUSIC_DIRECTORY`: The absolute path to your music directory on the host machine.
 - `HIFI_SOURCES`: Comma-separated list of hifi-api source URLs.
 - `CLEAN_EXISTING_DOWNLOADS`: (optional) Whether to clean existing downloads before downloading new albums. Default is `false`.
