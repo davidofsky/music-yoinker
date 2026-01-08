@@ -10,11 +10,11 @@
   background: #1e1e1e;
   border: 2px solid #333;
   border-radius: .5em;
-  padding: .5em;
+  padding: 0.5em 1em;
   cursor: pointer;
 }
 
-.OpenQueueBackground {
+.ModalBackground {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -22,59 +22,87 @@
   position: fixed;
   width: 100vw;
   height: 100vh;
-  left:0; 
-  top:0;
+  left: 0;
+  top: 0;
   margin: 0;
   padding: 0;
   z-index: 6;
   background-color: #1e1e1e99;
 }
 
-.OpenQueueModal {
+.Modal {
   padding: 1.5em;
   background: linear-gradient(145deg, #1e1e1e, #000000);
-  border-radius: .5em;
+  border-radius: 0.5em;
   overflow: hidden;
   border: 2px solid #333;
   width: 40em;
   max-width: 80vw;
   max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
 }
 
 .QueuedList {
   max-height: 50vh;
-  overflow-y: scroll;
-  overflow-x: visible;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
 }
 
 .QueuedItem {
-  min-width: 0;
   width: 100%;
-  padding: .2em;
-  margin-top: .2em;
-  margin-bottom: .2em;
+  padding: 1em;
   background: linear-gradient(145deg, #1e1e1e, #000000);
-  border-radius: .5em;
-  overflow: hidden;
+  border-radius: 0.5em;
   border: 2px solid #333;
   display: flex;
   gap: 1em;
   align-items: center;
-  padding-left: 1em;
-  padding-right: 1em;
   justify-content: space-between;
+  min-width: 0;
+  position: relative;
+}
 
-  > p {
-    text-overflow: ellipsis;
-    width: 90%;
-    overflow: hidden;
-  }
+.QueuedItem.downloading {
+  overflow: hidden;
+}
 
-  > svg {
-    min-width: min-content;
+.QueuedItem.downloading::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(90deg, #4a9eff, #0080ff);
+  animation: progress 2s ease-in-out infinite;
+  width: 100%;
+}
+
+@keyframes progress {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(74, 158, 255, 0.6);
   }
-  .CancelQueue {
-    margin-left: auto;
-    cursor: pointer;
+  50% {
+    box-shadow: 0 0 20px rgba(74, 158, 255, 1);
   }
+}
+
+.QueuedItem > p {
+  flex: 1;
+  min-width: 0;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.QueuedItem > svg {
+  flex-shrink: 0;
+}
+
+.CancelQueue {
+  cursor: pointer;
+  flex-shrink: 0;
 }

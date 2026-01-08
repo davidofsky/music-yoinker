@@ -10,10 +10,10 @@ import Hifi from './hifi'
 import Config from './config';
 
 class Downloader {
-  private static queue: Track[] = []
+  private static queue: Track[] = [];
   private static processing: boolean = false;
   private static cleanedAlbumDirs: Map<string, number> = new Map();
-  public static GetQueue = () => { return this.queue }
+  public static GetQueue = () => { return this.queue };
 
   public static async IsAlbumDownloaded(album: Album): Promise<boolean> {
     try {
