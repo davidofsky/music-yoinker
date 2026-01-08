@@ -41,7 +41,12 @@ const SearchBar = (props: Props) => {
     if (query.trim().length === 0) return;
     setLoading(true);
 
-    router.push(`?q=${encodeURIComponent(query)}`);
+    const modeString =
+      props.browseMode === BrowseMode.Albums ? 'albums' :
+      props.browseMode === BrowseMode.Tracks ? 'singles' :
+      'artists';
+
+    router.push(`?q=${encodeURIComponent(query)}&mode=${modeString}`);
 
     const { endpoint, setter } = stateSetterConfig[props.browseMode];
     const result = await axios.get(endpoint, { params: { query } });

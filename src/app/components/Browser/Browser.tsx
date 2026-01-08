@@ -38,7 +38,21 @@ const Browser = () => {
 
   useEffect(() => {
     const query = searchParams.get('q');
-    if (query) {
+    const mode = searchParams.get('mode');
+
+    if (mode) {
+      const modeMap: { [key: string]: BrowseMode } = {
+        'albums': BrowseMode.Albums,
+        'singles': BrowseMode.Tracks,
+        'artists': BrowseMode.Artists
+      };
+      const selectedMode = modeMap[mode] ?? BrowseMode.Albums;
+      setBrowseMode(selectedMode);
+
+      if (query) {
+        performSearch(query, selectedMode);
+      }
+    } else if (query) {
       performSearch(query, browseMode);
     }
   }, []);
@@ -138,13 +152,27 @@ const Browser = () => {
         <br/>
         <p>
           <label>Browse </label>
-          <select onChange={(e) => {
-            if (e.currentTarget.value==="albums") {
-              setBrowseMode(BrowseMode.Albums)
-            } else if (e.currentTarget.value==="singles") {
-              setBrowseMode(BrowseMode.Tracks)
-            } else if (e.currentTarget.value==="artists") {
-              setBrowseMode(BrowseMode.Artists)
+          <select value={
+            browseMode === BrowseMode.Albums ? 'albums' :
+            browseMode === BrowseMode.Tracks ? 'singles' :
+            'artists'
+          } onChange={(e) => {
+            const newMode = e.currentTarget.value;
+            if (newMode === "albums") {
+              setBrowseMode(BrowseMode.Albums);
+            } else if (newMode === "singles") {
+              setBrowseMode(BrowseMode.Tracks);
+            } else if (newMode === "artists") {
+              setBrowseMode(BrowseMode.Artists);
+            }
+
+            // Update URL with new mode
+            const query = searchParams.get('q');
+            if (query) {
+              const newParams = new URLSearchParams();
+              newParams.set('q', query);
+              newParams.set('mode', newMode);
+              window.history.replaceState({}, '', `?${newParams.toString()}`);
             }
           }}>
             <option value="albums">Albums</option>
