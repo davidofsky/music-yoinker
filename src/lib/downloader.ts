@@ -6,7 +6,7 @@ import { Track, Album } from "./interfaces";
 import Tidal from "./tidal"
 import { broadcastQueue } from '@/lib/broadcast';
 import { PegTheFile } from './pegger';
-import Hifi from './hifi'
+import Hifi, { DownloadTrackSource } from './hifi'
 import Config from './config';
 
 class Downloader {
@@ -118,25 +118,42 @@ class Downloader {
 
     try {
       console.info(`Downloading track: ${track.title}`);
-      const blobUrl = await Hifi.downloadTrack(track.id);
+      const downloadSource: DownloadTrackSource = await Hifi.downloadTrack(track.id);
       const tidalAlbum = Tidal.getAlbum(track.album.id);
 
-      console.debug('retrieving blob', blobUrl)
-      const response = await axios.get(blobUrl, {
-        responseType: 'arraybuffer',
-        timeout: 60000 // Longer timeout for actual download
-      }).then((e) => { console.debug('retrieved blob'); return e; });
+      let extension = '.flac';
+      let contentType: string | undefined;
+      let payload: Buffer;
 
-      const contentType = response.headers['content-type'];
+      if (downloadSource.type === 'direct') {
+        console.debug('retrieving blob', downloadSource.url)
+        const response = await axios.get(downloadSource.url, {
+          responseType: 'arraybuffer',
+          timeout: 60000
+        }).then((e) => { console.debug('retrieved blob'); return e; });
 
-      let extension = '.flac'
-      if (contentType.includes('audio/mp4')) extension = '.mp4';
-      else if (contentType.includes('audio/mp3')) extension = '.mp3';
+        contentType = response.headers['content-type'];
+        extension = this.resolveExtensionFromContentType(contentType, '.flac');
+        payload = Buffer.from(response.data);
+      } else {
+        console.debug('retrieving dash manifest segments', { init: downloadSource.initUrl, segments: downloadSource.segmentUrls.length });
+
+        const buffers: Buffer[] = [];
+        const allUrls = [downloadSource.initUrl, ...downloadSource.segmentUrls];
+        for (const url of allUrls) {
+          const segmentResponse = await axios.get(url, { responseType: 'arraybuffer', timeout: 60000 });
+          if (!contentType) contentType = segmentResponse.headers['content-type'];
+          buffers.push(Buffer.from(segmentResponse.data));
+        }
+
+        payload = Buffer.concat(buffers);
+        extension = downloadSource.extension || this.resolveExtensionFromContentType(contentType, '.mp4');
+      }
 
       tmpFile = tmp.fileSync({ postfix: extension });
       const filePath = tmpFile.name;
 
-      fs.writeFileSync(filePath, response.data);
+      fs.writeFileSync(filePath, payload);
 
       const version = (track.version && track.version.toString().trim() !== '') ? ` (${track.version.toString().trim()})` : '';
       const sanitizedTitle = this.sanitizeFilename(track.title);
@@ -240,6 +257,15 @@ class Downloader {
 
   private sanitizeFilename(name: string): string {
     return name.replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, ' ').trim();
+  }
+
+  private resolveExtensionFromContentType(contentType?: string, fallback = '.flac'): string {
+    if (!contentType) return fallback;
+    const lower = contentType.toLowerCase();
+    if (lower.includes('audio/mp4') || lower.includes('mp4')) return '.mp4';
+    if (lower.includes('audio/mp3') || lower.includes('mpeg')) return '.mp3';
+    if (lower.includes('flac')) return '.flac';
+    return fallback;
   }
 }
 
