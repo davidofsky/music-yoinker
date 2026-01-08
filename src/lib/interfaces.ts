@@ -26,6 +26,7 @@ export interface Track {
   artist: string
   copyright: string
   artwork: string
+  isDownloaded?: boolean
 }
 
 export interface Artist {

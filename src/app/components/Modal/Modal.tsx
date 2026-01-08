@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "motion/react"
-import { ReactNode } from "react"
+import { ReactNode, useEffect } from "react"
 
 type Props = {
   isOpen: boolean
@@ -8,6 +8,15 @@ type Props = {
 }
 
 const Modal = ({ isOpen, onClose, children }: Props) => {
+  useEffect(() => {
+    if (isOpen) {
+      document.documentElement.style.overflow = 'hidden';
+      return () => {
+        document.documentElement.style.overflow = '';
+      };
+    }
+  }, [isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (
