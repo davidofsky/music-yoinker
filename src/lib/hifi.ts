@@ -182,11 +182,12 @@ class Hifi {
         headers: this.DEFAULT_HEADERS,
         params: { f: id }
       });
+      const allResults = result.data.albums.items || [];
 
-      const data = result.data.albums?.rows?.[0]?.modules?.find((m: any) => m.type === 'ALBUM_LIST');
-      const items = data?.pagedList?.items || [];
-      const albums = await Promise.all(items.map((album: any) => this.parseAlbum(album)));
-      return this.removeDoubleAlbums(albums.filter(Boolean) as Album[]);
+      const albums = allResults.filter((album: any) => album.type === 'ALBUM');
+      const parsedAlbums = await Promise.all(albums.map((album: any) => this.parseAlbum(album)));
+
+      return this.removeDoubleAlbums(parsedAlbums.filter(Boolean));
     }, 'SearchArtistAlbums');
   }
 
