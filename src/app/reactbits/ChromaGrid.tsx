@@ -1,13 +1,16 @@
 import React, { useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { gsap } from 'gsap';
 import { motion } from 'motion/react'
 import { FaCheckCircle } from 'react-icons/fa';
 import './ChromaGrid.css';
 
 export interface ChromaItem {
-  image: string;
   title: string;
-  subtitle: string;
+  artist?: string;
+  year?: string;
+
+  image: string;
   handle?: string;
   location?: string;
   borderColor?: string;
@@ -111,7 +114,7 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
       onPointerLeave={handleLeave}
     >
       {data.map((c, i) => (
-        <motion.article
+        <motion.article title={c.title}
           key={i}
           className="chroma-card"
           onMouseMove={handleCardMove}
@@ -125,7 +128,9 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
           }
         >
           <div className="chroma-img-wrapper">
-            <img src={c.image} alt={c.title} loading="lazy" />
+            <div className="chroma-img-inner">
+              <Image src={c.image} alt={c.title} loading="lazy" fill sizes='100%' />
+            </div>
             {c.isDownloaded && (
               <div className="chroma-downloaded-badge">
                 <FaCheckCircle className="chroma-downloaded-icon" />
@@ -135,8 +140,9 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
           <footer className="chroma-info">
             <h3 className="name">{c.title}</h3>
             {c.handle && <span className="handle">{c.handle}</span>}
-            <br/>
-            <p className="role">{c.subtitle}</p>
+            <br />
+            <p className="role">{c.artist}</p>
+            <p className="role">{c.year}</p>
             {c.location && <span className="location">{c.location}</span>}
           </footer>
         </motion.article>

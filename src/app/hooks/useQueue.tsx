@@ -1,8 +1,8 @@
-import { Track } from '@/lib/interfaces';
 import { useEffect, useState } from 'react';
+import { ITrack } from '../interfaces/track.interface';
 
-export function useQueue() : Track[] {
-  const [queue, setQueue] = useState<Track[]>([]);
+export function useQueue() : ITrack[] {
+  const [queue, setQueue] = useState<ITrack[]>([]);
 
   useEffect(() => {
     const es = new EventSource('/api/queue/stream');

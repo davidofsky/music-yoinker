@@ -9,9 +9,9 @@ import Modal from "../Modal/Modal"
 const AlbumViewer = () => {
   const [openAlbum, setOpenAlbum] = useContext(OpenAlbumCtx)!
   const [isDownloading, setIsDownloading] = useState(false)
-  
+
   const closeAction = () => setOpenAlbum(null);
-  
+
   const downloadAlbum = async () => {
     try {
       setIsDownloading(true)
@@ -27,7 +27,7 @@ const AlbumViewer = () => {
       setIsDownloading(false)
     }
   }
-  
+
   return (
     <Modal isOpen={!!openAlbum} onClose={closeAction}>
       <h1 className="ModalTitle">{openAlbum?.Title} ({openAlbum?.ReleaseDate?.split("-")[0]})</h1>
