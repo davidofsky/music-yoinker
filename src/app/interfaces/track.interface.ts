@@ -1,4 +1,4 @@
-export interface ITidalTrack {
+export interface ITrack {
     id: number;
     title: string;
     duration: number;
@@ -32,9 +32,9 @@ export interface ITidalTrack {
     upload: boolean;
     accessType: string | null;
     spotlighted: boolean;
-    artist: ITidalTrackArtist;
-    artists: ITidalTrackArtist[];
-    album: ITidalTrackAlbum;
+    artist: ITrackArtist;
+    artists: ITrackArtist[];
+    album: ITrackAlbum;
     mixes: { TRACK_MIX: string };
 
     // Custom properties
@@ -42,7 +42,7 @@ export interface ITidalTrack {
     isDownloaded: boolean;
 }
 
-export interface ITidalTrackArtist {
+export interface ITrackArtist {
     id: number;
     name: string;
     handle: string | null;
@@ -50,7 +50,7 @@ export interface ITidalTrackArtist {
     picture: string;
 }
 
-export interface ITidalTrackAlbum {
+export interface ITrackAlbum {
     id: number;
     title: string;
     cover: string;

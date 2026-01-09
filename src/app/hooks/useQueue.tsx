@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ITidalTrack } from '../interfaces/tidal-track.interface';
+import { ITrack } from '../interfaces/track.interface';
 
-export function useQueue() : ITidalTrack[] {
-  const [queue, setQueue] = useState<ITidalTrack[]>([]);
+export function useQueue() : ITrack[] {
+  const [queue, setQueue] = useState<ITrack[]>([]);
 
   useEffect(() => {
     const es = new EventSource('/api/queue/stream');

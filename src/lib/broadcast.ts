@@ -1,4 +1,4 @@
-import { ITidalTrack } from '@/app/interfaces/tidal-track.interface';
+import { ITrack } from '@/app/interfaces/track.interface';
 
 type ClientControllerList = Map<string, ReadableStreamDefaultController>
 
@@ -27,7 +27,7 @@ export function removeClient(clientId: string) {
   getState().clientControllers.delete(clientId);
 }
 
-export async function broadcastQueue(queue: ITidalTrack[]) {
+export async function broadcastQueue(queue: ITrack[]) {
   const state = getState();
   console.info(`[Broadcast] Broadcasting to ${state.clientControllers.size} clients`);
 

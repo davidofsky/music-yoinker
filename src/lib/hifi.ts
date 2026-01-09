@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { Album, Artist } from './interfaces';
 import Config from './config';
-import { ITidalTrack } from '@/app/interfaces/tidal-track.interface';
+import { ITrack } from '@/app/interfaces/track.interface';
 
 export type DownloadTrackSource =
   | { type: 'direct'; url: string; mimeType?: string | null }
@@ -74,15 +74,15 @@ class Hifi {
     }, 'SearchArtist');
   }
 
-  public static async searchTrack(query: string): Promise<ITidalTrack[]> {
+  public static async searchTrack(query: string): Promise<ITrack[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/search/`, {
         headers: this.DEFAULT_HEADERS,
         params: { s: query }
       });
 
-      const tracks: ITidalTrack[] = result.data.data?.items || [];
-      tracks.forEach((track: ITidalTrack) => {
+      const tracks: ITrack[] = result.data.data?.items || [];
+      tracks.forEach((track: ITrack) => {
         track.artwork = track.album.cover ? `https://resources.tidal.com/images/${track.album.cover.replaceAll('-', '/')}/640x640.jpg` : '';
       });
 
@@ -191,15 +191,15 @@ class Hifi {
     }, 'SearchArtistAlbums');
   }
 
-  public static async searchAlbumTracks(id: string): Promise<ITidalTrack[]> {
+  public static async searchAlbumTracks(id: string): Promise<ITrack[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/album/`, {
         headers: this.DEFAULT_HEADERS,
         params: { id }
       });
 
-      const embeddedTracks: { item: ITidalTrack }[] = result.data.data.items || [];
-      const tracks: ITidalTrack[] = embeddedTracks.map(et => { return et.item; });
+      const embeddedTracks: { item: ITrack }[] = result.data.data.items || [];
+      const tracks: ITrack[] = embeddedTracks.map(et => { return et.item; });
       return tracks.filter(Boolean).sort((a, b) => a.volumeNumber - b.volumeNumber || a.trackNumber - b.trackNumber);
     }, 'SearchAlbumTracks');
   }

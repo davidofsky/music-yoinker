@@ -1,4 +1,4 @@
-import { ITidalTrack } from "@/app/interfaces/tidal-track.interface"
+import { ITrack } from "@/app/interfaces/track.interface"
 
 export interface Album {
   id: string
@@ -20,6 +20,6 @@ export interface DisplayItem {
   Type: "Album"|"Single"
   Title: string
   Artist: string
-  Tracks: ITidalTrack[]
+  Tracks: ITrack[]
   ReleaseDate?: string
 }

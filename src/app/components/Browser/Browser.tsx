@@ -9,7 +9,7 @@ import { useOpenAlbum } from "@/app/hooks/useOpenAlbum";
 
 import "./Browser.css"
 import axios from "axios";
-import { ITidalTrack } from "@/app/interfaces/tidal-track.interface";
+import { ITrack } from "@/app/interfaces/track.interface";
 
 export enum BrowseMode {
   Albums,
@@ -34,7 +34,7 @@ const Browser = () => {
 
   const [browseMode, setBrowseMode] = useState<BrowseMode>(BrowseMode.Albums)
   const [albums, setAlbums] = useState<Array<Album>>([])
-  const [tracks, setTracks] = useState<Array<ITidalTrack>>([])
+  const [tracks, setTracks] = useState<Array<ITrack>>([])
   const [artists, setArtists] = useState<Array<Artist>>([])
 
   useEffect(() => {
@@ -96,7 +96,7 @@ const Browser = () => {
     }
   }
 
-  const TrackToCI = (track: ITidalTrack) : ChromaItem => {
+  const TrackToCI = (track: ITrack) : ChromaItem => {
     return {
       image: track.artwork,
       artist: track.artist.name,

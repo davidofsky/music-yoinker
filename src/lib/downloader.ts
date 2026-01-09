@@ -8,10 +8,10 @@ import { broadcastQueue } from '@/lib/broadcast';
 import { PegTheFile } from './pegger';
 import Hifi, { DownloadTrackSource } from './hifi'
 import Config from './config';
-import { ITidalTrack } from '@/app/interfaces/tidal-track.interface';
+import { ITrack } from '@/app/interfaces/track.interface';
 
 class Downloader {
-  private queue: ITidalTrack[] = [];
+  private queue: ITrack[] = [];
   private processing: boolean = false;
   private cleanedAlbumDirs: Map<string, number> = new Map();
   public GetQueue = () => { return this.queue };
@@ -39,7 +39,7 @@ class Downloader {
     return this.isArtistAlbumDownloaded(album.artists[0].name, album.title);
   }
 
-  public async IsTrackDownloaded(track: ITidalTrack): Promise<boolean> {
+  public async IsTrackDownloaded(track: ITrack): Promise<boolean> {
     return await this.isArtistAlbumDownloaded(track.artist.name, track.album.title);
   }
 
@@ -50,7 +50,7 @@ class Downloader {
     return s.padStart(Config.TRACK_PAD_LENGTH, '0');
   }
 
-  public AddToQueue(tracks: ITidalTrack[]) {
+  public AddToQueue(tracks: ITrack[]) {
     this.queue.push(...tracks);
     broadcastQueue(this.queue);
     this.download().catch(err => {
@@ -98,7 +98,7 @@ class Downloader {
   }
 
 
-  private async downloadTrack(track: ITidalTrack) {
+  private async downloadTrack(track: ITrack) {
     let tmpFile: tmp.FileResult | null = null;
 
     try {

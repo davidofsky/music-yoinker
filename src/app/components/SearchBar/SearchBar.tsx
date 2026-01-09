@@ -8,12 +8,12 @@ import { LoadingCtx } from "@/app/context";
 import { BrowseMode } from "../Browser/Browser"
 
 import "./SearchBar.css"
-import { ITidalTrack } from "@/app/interfaces/tidal-track.interface";
+import { ITrack } from "@/app/interfaces/track.interface";
 
 type Props = {
   browseMode: BrowseMode,
   setAlbums: Dispatch<SetStateAction<Album[]>>,
-  setTracks: Dispatch<SetStateAction<ITidalTrack[]>>
+  setTracks: Dispatch<SetStateAction<ITrack[]>>
   setArtists: Dispatch<SetStateAction<Artist[]>>
 }
 
