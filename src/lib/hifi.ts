@@ -197,7 +197,8 @@ class Hifi {
         params: { id }
       });
 
-      const tracks: ITidalTrack[] = result.data.data.items || [];
+      const embeddedTracks: { item: ITidalTrack }[] = result.data.data.items || [];
+      const tracks: ITidalTrack[] = embeddedTracks.map(et => { return et.item; });
       return tracks.filter(Boolean).sort((a, b) => a.volumeNumber - b.volumeNumber || a.trackNumber - b.trackNumber);
     }, 'SearchAlbumTracks');
   }

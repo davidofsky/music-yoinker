@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { gsap } from 'gsap';
 import { motion } from 'motion/react'
 import { FaCheckCircle } from 'react-icons/fa';
@@ -113,7 +114,7 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
       onPointerLeave={handleLeave}
     >
       {data.map((c, i) => (
-        <motion.article
+        <motion.article title={c.title}
           key={i}
           className="chroma-card"
           onMouseMove={handleCardMove}
@@ -127,7 +128,9 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
           }
         >
           <div className="chroma-img-wrapper">
-            <img src={c.image} alt={c.title} loading="lazy" />
+            <div className="chroma-img-inner">
+              <Image src={c.image} alt={c.title} loading="lazy" fill />
+            </div>
             {c.isDownloaded && (
               <div className="chroma-downloaded-badge">
                 <FaCheckCircle className="chroma-downloaded-icon" />
@@ -137,7 +140,7 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
           <footer className="chroma-info">
             <h3 className="name">{c.title}</h3>
             {c.handle && <span className="handle">{c.handle}</span>}
-            <br/>
+            <br />
             <p className="role">{c.artist}</p>
             <p className="role">{c.year}</p>
             {c.location && <span className="location">{c.location}</span>}
