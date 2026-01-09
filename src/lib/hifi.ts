@@ -3,6 +3,10 @@ import axios from 'axios';
 import { Album, Artist, Track } from './interfaces';
 import Config from './config';
 
+export type DownloadTrackSource =
+  | { type: 'direct'; url: string; mimeType?: string | null }
+  | { type: 'dash'; mimeType?: string | null; initUrl: string; segmentUrls: string[]; extension: string };
+
 class Hifi {
   private static readonly DEFAULT_HEADERS = { accept: 'application/vnd.api+json' };
   private static maxRetries = 3;
@@ -82,18 +86,78 @@ class Hifi {
     }, 'SearchTrack');
   }
 
-  public static async downloadTrack(id: string): Promise<string> {
+  public static async downloadTrack(id: string): Promise<DownloadTrackSource> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/track/`, {
+        headers: this.DEFAULT_HEADERS,
         params: {
           id,
           quality: "LOSSLESS"
         },
         timeout: 30000
       });
-      const manifest: any = JSON.parse(atob(result.data.data.manifest));
-      return manifest.urls[0];
+
+      const { manifestMimeType, manifest, assetPresentation } = result.data.data;
+      if (assetPresentation !== 'FULL') {
+        throw new Error(`[DownloadTrack] Asset presentation is not FULL: ${assetPresentation}`);
+      }
+
+      const decodedManifest = manifest ? atob(manifest) : '';
+
+      if (!decodedManifest) {
+        throw new Error('[DownloadTrack] Empty manifest received from server');
+      } else if (manifestMimeType === 'application/vnd.tidal.bts') {
+        const parsed: any = JSON.parse(decodedManifest);
+        const url = parsed?.urls?.[0];
+        return { type: 'direct', url, mimeType: manifestMimeType };
+      } else if (manifestMimeType === 'application/dash+xml') {
+        return this.parseDashManifest(decodedManifest, manifestMimeType);
+      } else {
+        throw new Error(`[DownloadTrack] Unsupported manifest mime type: ${manifestMimeType}`);
+      }
     }, 'DownloadTrack');
+  }
+
+  private static parseDashManifest(manifestXml: string, manifestMimeType?: string | null): DownloadTrackSource {
+    const initMatch = manifestXml.match(/initialization="([^"]+)"/i);
+    const mediaMatch = manifestXml.match(/media="([^"]+)"/i);
+    if (!initMatch || !mediaMatch) {
+      throw new Error('[DownloadTrack] DASH manifest missing initialization or media template');
+    }
+
+    const initUrl = initMatch[1].replace(/&amp;/g, '&');
+    const mediaTemplate = mediaMatch[1].replace(/&amp;/g, '&');
+    const startNumber = Number(manifestXml.match(/startNumber="(\d+)"/i)?.[1] || '1');
+
+    const timelineMatches = Array.from(manifestXml.matchAll(/<S[^>]*d="(\d+)"(?:[^>]*r="(-?\d+)")?[^>]*>/gi));
+    const segmentUrls: string[] = [];
+    let segmentIndex = startNumber;
+
+    for (const match of timelineMatches) {
+      const repeat = Number(match[2] ?? '0');
+      const count = 1 + (Number.isFinite(repeat) ? repeat : 0);
+      for (let i = 0; i < count; i++) {
+        segmentUrls.push(mediaTemplate.replace('$Number$', String(segmentIndex++)));
+      }
+    }
+
+    if (segmentUrls.length === 0) {
+      segmentUrls.push(mediaTemplate.replace('$Number$', String(segmentIndex)));
+    }
+
+    const templateExtMatch = mediaTemplate.match(/\.([a-z0-9]+)(?:\?|$)/i);
+    const codecs = manifestXml.match(/codecs="([^"]+)"/i)?.[1]?.toLowerCase() ?? '';
+    const extension = templateExtMatch
+      ? `.${templateExtMatch[1]}`
+      : (codecs.includes('flac') ? '.flac' : '.mp4');
+
+    return {
+      type: 'dash',
+      mimeType: manifestMimeType,
+      initUrl,
+      segmentUrls,
+      extension
+    };
   }
 
   public static async downloadAlbum(id: string): Promise<Album> {
