@@ -97,7 +97,11 @@ class Hifi {
         timeout: 30000
       });
 
-      const { manifestMimeType, manifest } = result.data.data;
+      const { manifestMimeType, manifest, assetPresentation } = result.data.data;
+      if (assetPresentation !== 'FULL') {
+        throw new Error(`[DownloadTrack] Asset presentation is not FULL: ${assetPresentation}`);
+      }
+
       const decodedManifest = manifest ? atob(manifest) : '';
 
       if (!decodedManifest) {
