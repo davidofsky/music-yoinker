@@ -129,7 +129,7 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
         >
           <div className="chroma-img-wrapper">
             <div className="chroma-img-inner">
-              <Image src={c.image} alt={c.title} loading="lazy" fill />
+              <Image src={c.image} alt={c.title} loading="lazy" fill sizes='100%' />
             </div>
             {c.isDownloaded && (
               <div className="chroma-downloaded-badge">
