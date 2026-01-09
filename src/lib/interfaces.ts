@@ -1,3 +1,5 @@
+import { ITrack } from "@/app/interfaces/track.interface"
+
 export interface Album {
   id: string
   title: string
@@ -5,27 +7,6 @@ export interface Album {
   artwork: string
   artists: Artist[]
   color: string
-  isDownloaded?: boolean
-}
-
-export interface Track {
-  id: string
-  title: string
-  volumeNr: number
-  trackNr: number
-  duration: number
-  popularity: number
-  bpm: number
-  key: string
-  isrc: string
-  keyScale: string
-  explicit: boolean
-  type: "album"|"single"
-  version: string
-  album: Album
-  artist: string
-  copyright: string
-  artwork: string
   isDownloaded?: boolean
 }
 
@@ -39,6 +20,6 @@ export interface DisplayItem {
   Type: "Album"|"Single"
   Title: string
   Artist: string
-  Tracks: Track[]
+  Tracks: ITrack[]
   ReleaseDate?: string
 }

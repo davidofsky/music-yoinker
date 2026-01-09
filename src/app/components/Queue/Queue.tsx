@@ -24,11 +24,9 @@ const Queue = () => {
     }
   }, [queuedTracks]);
 
-  const removeTrack = async (trackId: string) => {
+  const removeTrack = async (trackId: number) => {
     try {
-      await axios.delete("/api/track", {
-        params: { id: trackId }
-      });
+      await axios.delete("/api/track", { params: { id: trackId } });
     } catch (err) {
       console.error('Failed to remove track:', err);
     }
