@@ -6,7 +6,7 @@ import { Track, Album } from "./interfaces";
 import Tidal from "./tidal"
 import { broadcastQueue } from '@/lib/broadcast';
 import { PegTheFile } from './pegger';
-import Hifi from './hifi'
+import Hifi, { DownloadTrackSource } from './hifi'
 import Config from './config';
 
 class Downloader {
@@ -118,25 +118,28 @@ class Downloader {
 
     try {
       console.info(`Downloading track: ${track.title}`);
-      const blobUrl = await Hifi.downloadTrack(track.id);
+      const downloadSource: DownloadTrackSource = await Hifi.downloadTrack(track.id);
       const tidalAlbum = Tidal.getAlbum(track.album.id);
 
-      console.debug('retrieving blob', blobUrl)
-      const response = await axios.get(blobUrl, {
-        responseType: 'arraybuffer',
-        timeout: 60000 // Longer timeout for actual download
-      }).then((e) => { console.debug('retrieved blob'); return e; });
+      const urls = downloadSource.type === 'dash' ? [downloadSource.initUrl, ...downloadSource.segmentUrls] : [downloadSource.url];
+      const defaultExtension = downloadSource.type === 'dash' ? downloadSource.extension : '.flac';
 
-      const contentType = response.headers['content-type'];
+      const buffers: Buffer[] = [];
+      let contentType: string | undefined;
 
-      let extension = '.flac'
-      if (contentType.includes('audio/mp4')) extension = '.mp4';
-      else if (contentType.includes('audio/mp3')) extension = '.mp3';
+      for (const url of urls) {
+        const response = await axios.get(url, { responseType: 'arraybuffer', timeout: 60000 });
+        if (!contentType) contentType = response.headers['content-type'];
+        buffers.push(Buffer.from(response.data));
+      }
+
+      const payload = Buffer.concat(buffers);
+      const extension = this.resolveExtensionFromContentType(contentType, defaultExtension);
 
       tmpFile = tmp.fileSync({ postfix: extension });
       const filePath = tmpFile.name;
 
-      fs.writeFileSync(filePath, response.data);
+      fs.writeFileSync(filePath, payload);
 
       const version = (track.version && track.version.toString().trim() !== '') ? ` (${track.version.toString().trim()})` : '';
       const sanitizedTitle = this.sanitizeFilename(track.title);
@@ -171,7 +174,6 @@ class Downloader {
       }
 
       fs.mkdirSync(albumDir, { recursive: true });
-
 
       const tempFile = await PegTheFile(filePath, {
         title: track.title + version,
@@ -240,6 +242,15 @@ class Downloader {
 
   private sanitizeFilename(name: string): string {
     return name.replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, ' ').trim();
+  }
+
+  private resolveExtensionFromContentType(contentType?: string, fallback = '.flac'): string {
+    if (!contentType) return fallback;
+    const lower = contentType.toLowerCase();
+    if (lower.includes('audio/mp4') || lower.includes('mp4')) return '.mp4';
+    if (lower.includes('audio/mp3') || lower.includes('mpeg')) return '.mp3';
+    if (lower.includes('flac')) return '.flac';
+    return fallback;
   }
 }
 
