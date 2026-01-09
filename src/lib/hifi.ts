@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
-import { Album, Artist, Track } from './interfaces';
+import { Album, Artist } from './interfaces';
 import Config from './config';
+import { ITidalTrack } from '@/app/interfaces/tidal-track.interface';
 
 export type DownloadTrackSource =
   | { type: 'direct'; url: string; mimeType?: string | null }
@@ -73,16 +74,19 @@ class Hifi {
     }, 'SearchArtist');
   }
 
-  public static async searchTrack(query: string): Promise<Track[]> {
+  public static async searchTrack(query: string): Promise<ITidalTrack[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/search/`, {
         headers: this.DEFAULT_HEADERS,
         params: { s: query }
       });
 
-      const items = result.data.data?.items || [];
-      const tracks = await Promise.all(items.map((t: any) => this.parseTrack(t)));
-      return tracks.filter(Boolean) as Track[];
+      const tracks: ITidalTrack[] = result.data.data?.items || [];
+      tracks.forEach((track: ITidalTrack) => {
+        track.artwork = track.album.cover ? `https://resources.tidal.com/images/${track.album.cover.replaceAll('-', '/')}/640x640.jpg` : '';
+      });
+
+      return tracks.filter(Boolean);
     }, 'SearchTrack');
   }
 
@@ -186,16 +190,15 @@ class Hifi {
     }, 'SearchArtistAlbums');
   }
 
-  public static async searchAlbumTracks(id: string): Promise<Track[]> {
+  public static async searchAlbumTracks(id: string): Promise<ITidalTrack[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/album/`, {
         headers: this.DEFAULT_HEADERS,
         params: { id }
       });
 
-      const items = result.data.data?.items || [];
-      const tracks = await Promise.all(items.map((t: any) => this.parseTrack(t.item)));
-      return tracks.filter(Boolean).sort((a, b) => a.volumeNr - b.volumeNr || a.trackNr - b.trackNr);
+      const tracks: ITidalTrack[] = result.data.data.items || [];
+      return tracks.filter(Boolean).sort((a, b) => a.volumeNumber - b.volumeNumber || a.trackNumber - b.trackNumber);
     }, 'SearchAlbumTracks');
   }
 
@@ -210,28 +213,6 @@ class Hifi {
       artwork: album?.cover ? `https://resources.tidal.com/images/${album.cover.replaceAll('-', '/')}/640x640.jpg` : undefined,
       color: album?.vibrantColor
     } as Album;
-  }
-
-  private static parseTrack(track: any): Track {
-    return {
-      id: track?.id,
-      title: track?.title,
-      volumeNr: track?.volumeNumber || track?.volumeNr || 0,
-      trackNr: track?.trackNumber || track?.trackNr || 0,
-      duration: track?.duration,
-      popularity: track?.popularity,
-      bpm: track?.bpm,
-      key: track?.key,
-      keyScale: track?.keyScale,
-      isrc: track?.isrc,
-      explicit: track?.explicit,
-      type: 'album',
-      version: track?.version || '',
-      album: this.parseAlbum(track.album),
-      artist: track?.artist?.name || track?.artist,
-      copyright: track?.copyright,
-      artwork: track?.album?.cover ? `https://resources.tidal.com/images/${track.album.cover.replaceAll('-', '/')}/640x640.jpg` : undefined
-    } as Track;
   }
 
   private static removeDoubleAlbums(albums: Album[]): Album[] {

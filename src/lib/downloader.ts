@@ -2,20 +2,22 @@ import fs from 'fs';
 import tmp from 'tmp';
 import axios, { AxiosError } from "axios";
 import path from 'path';
-import { Track, Album } from "./interfaces";
+import { Album } from "./interfaces";
 import Tidal from "./tidal"
 import { broadcastQueue } from '@/lib/broadcast';
 import { PegTheFile } from './pegger';
 import Hifi, { DownloadTrackSource } from './hifi'
 import Config from './config';
+import { ITidalTrack } from '@/app/interfaces/tidal-track.interface';
 
 class Downloader {
-  private queue: Track[] = [];
+  private queue: ITidalTrack[] = [];
   private processing: boolean = false;
   private cleanedAlbumDirs: Map<string, number> = new Map();
   public GetQueue = () => { return this.queue };
 
   private async isArtistAlbumDownloaded(artistName: string, albumTitle: string): Promise<boolean> {
+    if (!artistName || !albumTitle) return false;
     try {
       const sanitizedArtist = this.sanitizeFilename(artistName);
       const sanitizedAlbum = this.sanitizeFilename(albumTitle);
@@ -34,28 +36,11 @@ class Downloader {
   }
 
   public async IsAlbumDownloaded(album: Album): Promise<boolean> {
-    if (!album.artists || album.artists.length === 0) {
-      return false;
-    }
     return this.isArtistAlbumDownloaded(album.artists[0].name, album.title);
   }
 
-  public async IsTrackDownloaded(track: Track): Promise<boolean> {
-    let artistName: string | undefined;
-
-    if (track.album.artists && track.album.artists.length > 0) {
-      artistName = track.album.artists[0].name;
-    } else if (track.artist) {
-      artistName = track.artist;
-    }
-
-    if (!artistName) {
-      console.debug(`[IsTrackDownloaded] No artist found for track "${track.title}"`);
-      return false;
-    }
-
-    const result = await this.isArtistAlbumDownloaded(artistName, track.album.title);
-    return result;
+  public async IsTrackDownloaded(track: ITidalTrack): Promise<boolean> {
+    return await this.isArtistAlbumDownloaded(track.artist.name, track.album.title);
   }
 
   private formatTrackNumber(value?: number | string) {
@@ -65,7 +50,7 @@ class Downloader {
     return s.padStart(Config.TRACK_PAD_LENGTH, '0');
   }
 
-  public AddToQueue(tracks: Track[]) {
+  public AddToQueue(tracks: ITidalTrack[]) {
     this.queue.push(...tracks);
     broadcastQueue(this.queue);
     this.download().catch(err => {
@@ -113,13 +98,13 @@ class Downloader {
   }
 
 
-  private async downloadTrack(track: Track) {
+  private async downloadTrack(track: ITidalTrack) {
     let tmpFile: tmp.FileResult | null = null;
 
     try {
       console.info(`Downloading track: ${track.title}`);
-      const downloadSource: DownloadTrackSource = await Hifi.downloadTrack(track.id);
-      const tidalAlbum = Tidal.getAlbum(track.album.id);
+      const downloadSource: DownloadTrackSource = await Hifi.downloadTrack(track.id.toString());
+      const tidalAlbum = Tidal.getAlbum(track.album.id.toString());
 
       const urls = downloadSource.type === 'dash' ? [downloadSource.initUrl, ...downloadSource.segmentUrls] : [downloadSource.url];
       const defaultExtension = downloadSource.type === 'dash' ? downloadSource.extension : '.flac';
@@ -143,8 +128,8 @@ class Downloader {
 
       const version = (track.version && track.version.toString().trim() !== '') ? ` (${track.version.toString().trim()})` : '';
       const sanitizedTitle = this.sanitizeFilename(track.title);
-      const volStr = this.formatTrackNumber(track.volumeNr);
-      const trackStr = this.formatTrackNumber(track.trackNr);
+      const volStr = this.formatTrackNumber(track.volumeNumber);
+      const trackStr = this.formatTrackNumber(track.trackNumber);
 
       let prefix = '';
       if (volStr && trackStr) prefix = `${volStr}${Config.TRACK_DISC_SEPARATOR}${trackStr}`;
@@ -178,21 +163,20 @@ class Downloader {
       const tempFile = await PegTheFile(filePath, {
         title: track.title + version,
         album: track.album.title || "",
-        artist: track.artist,
+        artist: track.artist.name,
         date: tidalAlbumResult.date,
         albumArtist: tidalAlbumResult.albumArtist,
         isrc: track.isrc || "",
         copyright: track.copyright || "",
-        discNumber: track.volumeNr?.toString() || "",
+        discNumber: track.volumeNumber?.toString() || "",
         duration: track.duration?.toString() || "",
         popularity: track.popularity?.toString() || "",
         bpm: track.bpm?.toString() || "",
         key: track.key,
-        keyScale: track.keyScale,
+        keyScale: track.keyScale || "",
         explicit: track.explicit?.toString() || "",
-        track: track.trackNr?.toString() || "",
+        track: track.trackNumber?.toString() || "",
       }, track.artwork);
-
 
       // Move file to correct destination
       const finalPath = path.join(albumDir, fileName);

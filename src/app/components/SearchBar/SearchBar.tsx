@@ -1,5 +1,5 @@
 "use client"
-import { Album, Artist, Track } from "@/lib/interfaces";
+import { Album, Artist } from "@/lib/interfaces";
 import axios from "axios";
 import { useRef, Dispatch, SetStateAction, useContext, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -8,11 +8,12 @@ import { LoadingCtx } from "@/app/context";
 import { BrowseMode } from "../Browser/Browser"
 
 import "./SearchBar.css"
+import { ITidalTrack } from "@/app/interfaces/tidal-track.interface";
 
 type Props = {
   browseMode: BrowseMode,
   setAlbums: Dispatch<SetStateAction<Album[]>>,
-  setTracks: Dispatch<SetStateAction<Track[]>>
+  setTracks: Dispatch<SetStateAction<ITidalTrack[]>>
   setArtists: Dispatch<SetStateAction<Artist[]>>
 }
 

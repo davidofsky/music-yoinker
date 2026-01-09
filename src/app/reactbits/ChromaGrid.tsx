@@ -5,9 +5,11 @@ import { FaCheckCircle } from 'react-icons/fa';
 import './ChromaGrid.css';
 
 export interface ChromaItem {
-  image: string;
   title: string;
-  subtitle: string;
+  artist?: string;
+  year?: string;
+
+  image: string;
   handle?: string;
   location?: string;
   borderColor?: string;
@@ -136,7 +138,8 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
             <h3 className="name">{c.title}</h3>
             {c.handle && <span className="handle">{c.handle}</span>}
             <br/>
-            <p className="role">{c.subtitle}</p>
+            <p className="role">{c.artist}</p>
+            <p className="role">{c.year}</p>
             {c.location && <span className="location">{c.location}</span>}
           </footer>
         </motion.article>
