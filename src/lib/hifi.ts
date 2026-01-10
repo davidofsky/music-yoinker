@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
-import { Album, Artist } from './interfaces';
 import Config from './config';
 import { ITrack } from '@/app/interfaces/track.interface';
+import { IAlbum } from '@/app/interfaces/album.interface';
+import { IArtist } from '@/app/interfaces/artist.interface';
 
 export type DownloadTrackSource =
   | { type: 'direct'; url: string; mimeType?: string | null }
@@ -46,31 +47,46 @@ class Hifi {
     throw new Error(`[${operationName}] All ${totalAttempts} attempts failed. Last error: ${lastError?.message ?? String(lastError)}`);
   }
 
-  public static async searchAlbum(query: string): Promise<Album[]> {
+  public static async searchAlbum(query: string): Promise<IAlbum[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/search/`, {
         headers: this.DEFAULT_HEADERS,
         params: { al: query }
       });
 
-      const items = result.data.data?.albums?.items || [];
-      const albums = await Promise.all(items.map((album: any) => this.parseAlbum(album)));
-      return this.removeDoubleAlbums(albums.filter(Boolean) as Album[]);
+      const albums: IAlbum[] = result.data.data?.albums?.items || [];
+
+      return this.parseAlbums(albums);
     }, 'SearchAlbum');
   }
 
-  public static async searchArtist(query: string): Promise<Artist[]> {
+  public static async searchArtistAlbums(id: string): Promise<IAlbum[]> {
+    return this.retryWithSourceCycle(async (sourceUrl) => {
+      const result = await axios.get(`${sourceUrl}/artist/`, {
+        headers: this.DEFAULT_HEADERS,
+        params: { f: id }
+      });
+
+      const allResults: IAlbum[] = result.data.albums.items || [];
+      const albums = allResults.filter((album) => album.type === 'ALBUM');
+
+      return this.parseAlbums(albums);
+    }, 'SearchArtistAlbums');
+  }
+
+  public static async searchArtist(query: string): Promise<IArtist[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/search/`, {
         headers: this.DEFAULT_HEADERS,
         params: { a: query }
       });
 
-      const items = result.data.data?.artists?.items || [];
-      return items.map((artist: any) => {
-        const picture = artist.picture ? `https://resources.tidal.com/images/${artist.picture.replaceAll('-', '/')}/750x750.jpg` : '/david.jpeg';
-        return { id: artist.id, name: artist.name, picture } as Artist;
+      const artists: IArtist[] = result.data.data?.artists?.items || [];
+      artists.forEach((artist) => {
+        artist.picture = artist.picture ? `https://resources.tidal.com/images/${artist.picture.replaceAll('-', '/')}/750x750.jpg` : '/david.jpeg';
       });
+
+      return artists.filter(Boolean);
     }, 'SearchArtist');
   }
 
@@ -82,12 +98,23 @@ class Hifi {
       });
 
       const tracks: ITrack[] = result.data.data?.items || [];
-      tracks.forEach((track: ITrack) => {
-        track.artwork = track.album.cover ? `https://resources.tidal.com/images/${track.album.cover.replaceAll('-', '/')}/640x640.jpg` : '';
+
+      return this.parseTracks(tracks);
+    }, 'SearchTrack');
+  }
+
+  public static async searchAlbumTracks(id: string): Promise<ITrack[]> {
+    return this.retryWithSourceCycle(async (sourceUrl) => {
+      const result = await axios.get(`${sourceUrl}/album/`, {
+        headers: this.DEFAULT_HEADERS,
+        params: { id }
       });
 
-      return tracks.filter(Boolean);
-    }, 'SearchTrack');
+      const embeddedTracks: { item: ITrack }[] = result.data.data.items || [];
+      const tracks: ITrack[] = embeddedTracks.map(et => { return et.item; });
+
+      return this.parseTracks(tracks).sort((a, b) => a.volumeNumber - b.volumeNumber || a.trackNumber - b.trackNumber);
+    }, 'SearchAlbumTracks');
   }
 
   public static async downloadTrack(id: string): Promise<DownloadTrackSource> {
@@ -111,7 +138,7 @@ class Hifi {
       if (!decodedManifest) {
         throw new Error('[DownloadTrack] Empty manifest received from server');
       } else if (manifestMimeType === 'application/vnd.tidal.bts') {
-        const parsed: any = JSON.parse(decodedManifest);
+        const parsed = JSON.parse(decodedManifest);
         const url = parsed?.urls?.[0];
         return { type: 'direct', url, mimeType: manifestMimeType };
       } else if (manifestMimeType === 'application/dash+xml') {
@@ -164,7 +191,7 @@ class Hifi {
     };
   }
 
-  public static async downloadAlbum(id: string): Promise<Album> {
+  public static async downloadAlbum(id: string): Promise<IAlbum> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/album/`, {
         headers: this.DEFAULT_HEADERS,
@@ -172,53 +199,12 @@ class Hifi {
       });
       console.log(result.data.data)
 
-      return this.parseAlbum(result.data.data);
+      return result.data.data;
     }, 'DownloadAlbum');
   }
 
-  public static async searchArtistAlbums(id: string): Promise<Album[]> {
-    return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get(`${sourceUrl}/artist/`, {
-        headers: this.DEFAULT_HEADERS,
-        params: { f: id }
-      });
-      const allResults = result.data.albums.items || [];
-
-      const albums = allResults.filter((album: any) => album.type === 'ALBUM');
-      const parsedAlbums = await Promise.all(albums.map((album: any) => this.parseAlbum(album)));
-
-      return this.removeDoubleAlbums(parsedAlbums.filter(Boolean));
-    }, 'SearchArtistAlbums');
-  }
-
-  public static async searchAlbumTracks(id: string): Promise<ITrack[]> {
-    return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get(`${sourceUrl}/album/`, {
-        headers: this.DEFAULT_HEADERS,
-        params: { id }
-      });
-
-      const embeddedTracks: { item: ITrack }[] = result.data.data.items || [];
-      const tracks: ITrack[] = embeddedTracks.map(et => { return et.item; });
-      return tracks.filter(Boolean).sort((a, b) => a.volumeNumber - b.volumeNumber || a.trackNumber - b.trackNumber);
-    }, 'SearchAlbumTracks');
-  }
-
-  private static parseAlbum(album: any): Album {
-    const tidalArtists = album?.artists || [];
-    const artists: Artist[] = tidalArtists.map((t: any) => ({ id: t.id, name: t.name }));
-    return {
-      id: album?.id,
-      title: album?.title,
-      releaseDate: album?.releaseDate,
-      artists,
-      artwork: album?.cover ? `https://resources.tidal.com/images/${album.cover.replaceAll('-', '/')}/640x640.jpg` : undefined,
-      color: album?.vibrantColor
-    } as Album;
-  }
-
-  private static removeDoubleAlbums(albums: Album[]): Album[] {
-    const map = new Map<string, Album>();
+  private static removeDoubleAlbums(albums: IAlbum[]): IAlbum[] {
+    const map = new Map<string, IAlbum>();
 
     for (const a of albums) {
       const artistNames = (a.artists || []).map(ar => (ar.name || ar.id || '').toString().toLowerCase()).sort().join('|');
@@ -239,6 +225,20 @@ class Hifi {
     console.log(`[RemoveDoubleAlbums] Reduced from ${albums.length} to ${map.size} albums.`);
 
     return Array.from(map.values());
+  }
+
+  private static parseAlbums(albums: IAlbum[]): IAlbum[] {
+    albums.forEach((album: IAlbum) => {
+      album.artwork = album.cover ? `https://resources.tidal.com/images/${album.cover.replaceAll('-', '/')}/640x640.jpg` : '';
+    });
+    return this.removeDoubleAlbums(albums.filter(Boolean));
+  }
+
+  private static parseTracks(tracks: ITrack[]): ITrack[] {
+    tracks.forEach((track) => {
+      track.artwork = track.album.cover ? `https://resources.tidal.com/images/${track.album.cover.replaceAll('-', '/')}/640x640.jpg` : '';
+    });
+    return tracks.filter(Boolean);
   }
 }
 

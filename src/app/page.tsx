@@ -1,18 +1,19 @@
 "use client"
-import { useState, Suspense, useEffect } from "react";
+import { useState, Suspense } from "react";
 import Browser from "./components/Browser/Browser";
 import { LoadingCtx, OpenAlbumCtx, OpenQueueCtx, OpenArtistCtx } from "./context"
-import { Artist, DisplayItem } from "@/lib/interfaces";
+import { DisplayItem } from "@/lib/interfaces";
 import AlbumViewer from "./components/AlbumViewer/AlbumViewer";
 import Queue from "./components/Queue/Queue";
 import Loading from "./components/Loading/Loading";
 import ArtistViewer from "./components/ArtistViewer/ArtistViewer";
+import { IArtist } from "./interfaces/artist.interface";
 
 export default function Home() {
   return (
     <div>
       <OpenAlbumCtx.Provider value={useState<DisplayItem|null>(null)}>
-        <OpenArtistCtx.Provider value={useState<Artist|null>(null)}>
+        <OpenArtistCtx.Provider value={useState<IArtist|null>(null)}>
           <OpenQueueCtx.Provider value={useState<boolean>(false)}>
             <LoadingCtx.Provider value={useState<boolean>(false)}>
 
