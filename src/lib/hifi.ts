@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
-import { Artist } from './interfaces';
 import Config from './config';
 import { ITrack } from '@/app/interfaces/track.interface';
 import { IAlbum } from '@/app/interfaces/album.interface';
+import { IArtist } from '@/app/interfaces/artist.interface';
 
 export type DownloadTrackSource =
   | { type: 'direct'; url: string; mimeType?: string | null }
@@ -54,7 +54,8 @@ class Hifi {
         params: { al: query }
       });
 
-      const albums = result.data.data?.albums?.items || [];
+      const albums: IAlbum[] = result.data.data?.albums?.items || [];
+
       return this.parseAlbums(albums);
     }, 'SearchAlbum');
   }
@@ -65,25 +66,27 @@ class Hifi {
         headers: this.DEFAULT_HEADERS,
         params: { f: id }
       });
-      const allResults = result.data.albums.items || [];
 
-      const albums = allResults.filter((album: any) => album.type === 'ALBUM');
+      const allResults: IAlbum[] = result.data.albums.items || [];
+      const albums = allResults.filter((album) => album.type === 'ALBUM');
+
       return this.parseAlbums(albums);
     }, 'SearchArtistAlbums');
   }
 
-  public static async searchArtist(query: string): Promise<Artist[]> {
+  public static async searchArtist(query: string): Promise<IArtist[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/search/`, {
         headers: this.DEFAULT_HEADERS,
         params: { a: query }
       });
 
-      const items = result.data.data?.artists?.items || [];
-      return items.map((artist: any) => {
-        const picture = artist.picture ? `https://resources.tidal.com/images/${artist.picture.replaceAll('-', '/')}/750x750.jpg` : '/david.jpeg';
-        return { id: artist.id, name: artist.name, picture } as Artist;
+      const artists: IArtist[] = result.data.data?.artists?.items || [];
+      artists.forEach((artist) => {
+        artist.picture = artist.picture ? `https://resources.tidal.com/images/${artist.picture.replaceAll('-', '/')}/750x750.jpg` : '/david.jpeg';
       });
+
+      return artists.filter(Boolean);
     }, 'SearchArtist');
   }
 
@@ -95,8 +98,8 @@ class Hifi {
       });
 
       const tracks: ITrack[] = result.data.data?.items || [];
-      tracks.forEach((track: ITrack) => {
-        track.artwork = track.album.cover ? `https://resources.tidal.com/images/${track.album.cover.replaceAll('-', '/')}/640x640.jpg` : '';
+      tracks.forEach((track) => {
+        track.artwork = track.album.cover ? `https://resources.tidal.com/images/${track.album.cover.replaceAll('-', '/')}/640x640.jpg` : '/david.jpeg';
       });
 
       return tracks.filter(Boolean);
@@ -124,7 +127,7 @@ class Hifi {
       if (!decodedManifest) {
         throw new Error('[DownloadTrack] Empty manifest received from server');
       } else if (manifestMimeType === 'application/vnd.tidal.bts') {
-        const parsed: any = JSON.parse(decodedManifest);
+        const parsed = JSON.parse(decodedManifest);
         const url = parsed?.urls?.[0];
         return { type: 'direct', url, mimeType: manifestMimeType };
       } else if (manifestMimeType === 'application/dash+xml') {

@@ -2,7 +2,6 @@
 import { useContext, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchBar from "../SearchBar/SearchBar";
-import { Artist } from "@/lib/interfaces";
 import ChromaGrid, { ChromaItem } from "../../reactbits/ChromaGrid";
 import { OpenQueueCtx, OpenAlbumCtx, LoadingCtx, OpenArtistCtx } from "@/app/context";
 import { useOpenAlbum } from "@/app/hooks/useOpenAlbum";
@@ -11,6 +10,7 @@ import "./Browser.css"
 import axios from "axios";
 import { ITrack } from "@/app/interfaces/track.interface";
 import { IAlbum } from "@/app/interfaces/album.interface";
+import { IArtist } from "@/app/interfaces/artist.interface";
 
 export enum BrowseMode {
   Albums,
@@ -36,7 +36,7 @@ const Browser = () => {
   const [browseMode, setBrowseMode] = useState<BrowseMode>(BrowseMode.Albums)
   const [albums, setAlbums] = useState<Array<IAlbum>>([])
   const [tracks, setTracks] = useState<Array<ITrack>>([])
-  const [artists, setArtists] = useState<Array<Artist>>([])
+  const [artists, setArtists] = useState<Array<IArtist>>([])
 
   useEffect(() => {
     const query = searchParams.get('q');
@@ -116,7 +116,7 @@ const Browser = () => {
     }
   }
 
-  const ArtistToCI = (artist: Artist) : ChromaItem => {
+  const ArtistToCI = (artist: IArtist) : ChromaItem => {
     return {
       image: artist.picture,
       title: artist.name,
