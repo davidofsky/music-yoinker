@@ -2,13 +2,13 @@ import fs from 'fs';
 import tmp from 'tmp';
 import axios, { AxiosError } from "axios";
 import path from 'path';
-import { Album } from "./interfaces";
 import Tidal from "./tidal"
 import { broadcastQueue } from '@/lib/broadcast';
 import { PegTheFile } from './pegger';
 import Hifi, { DownloadTrackSource } from './hifi'
 import Config from './config';
 import { ITrack } from '@/app/interfaces/track.interface';
+import { IAlbum } from '@/app/interfaces/album.interface';
 
 class Downloader {
   private queue: ITrack[] = [];
@@ -35,7 +35,7 @@ class Downloader {
     }
   }
 
-  public async IsAlbumDownloaded(album: Album): Promise<boolean> {
+  public async IsAlbumDownloaded(album: IAlbum): Promise<boolean> {
     return this.isArtistAlbumDownloaded(album.artists[0].name, album.title);
   }
 
