@@ -98,12 +98,23 @@ class Hifi {
       });
 
       const tracks: ITrack[] = result.data.data?.items || [];
-      tracks.forEach((track) => {
-        track.artwork = track.album.cover ? `https://resources.tidal.com/images/${track.album.cover.replaceAll('-', '/')}/640x640.jpg` : '/david.jpeg';
+
+      return this.parseTracks(tracks);
+    }, 'SearchTrack');
+  }
+
+  public static async searchAlbumTracks(id: string): Promise<ITrack[]> {
+    return this.retryWithSourceCycle(async (sourceUrl) => {
+      const result = await axios.get(`${sourceUrl}/album/`, {
+        headers: this.DEFAULT_HEADERS,
+        params: { id }
       });
 
-      return tracks.filter(Boolean);
-    }, 'SearchTrack');
+      const embeddedTracks: { item: ITrack }[] = result.data.data.items || [];
+      const tracks: ITrack[] = embeddedTracks.map(et => { return et.item; });
+
+      return this.parseTracks(tracks).sort((a, b) => a.volumeNumber - b.volumeNumber || a.trackNumber - b.trackNumber);
+    }, 'SearchAlbumTracks');
   }
 
   public static async downloadTrack(id: string): Promise<DownloadTrackSource> {
@@ -192,19 +203,6 @@ class Hifi {
     }, 'DownloadAlbum');
   }
 
-  public static async searchAlbumTracks(id: string): Promise<ITrack[]> {
-    return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get(`${sourceUrl}/album/`, {
-        headers: this.DEFAULT_HEADERS,
-        params: { id }
-      });
-
-      const embeddedTracks: { item: ITrack }[] = result.data.data.items || [];
-      const tracks: ITrack[] = embeddedTracks.map(et => { return et.item; });
-      return tracks.filter(Boolean).sort((a, b) => a.volumeNumber - b.volumeNumber || a.trackNumber - b.trackNumber);
-    }, 'SearchAlbumTracks');
-  }
-
   private static removeDoubleAlbums(albums: IAlbum[]): IAlbum[] {
     const map = new Map<string, IAlbum>();
 
@@ -234,6 +232,13 @@ class Hifi {
       album.artwork = album.cover ? `https://resources.tidal.com/images/${album.cover.replaceAll('-', '/')}/640x640.jpg` : '';
     });
     return this.removeDoubleAlbums(albums.filter(Boolean));
+  }
+
+  private static parseTracks(tracks: ITrack[]): ITrack[] {
+    tracks.forEach((track) => {
+      track.artwork = track.album.cover ? `https://resources.tidal.com/images/${track.album.cover.replaceAll('-', '/')}/640x640.jpg` : '';
+    });
+    return tracks.filter(Boolean);
   }
 }
 
