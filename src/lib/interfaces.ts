@@ -1,15 +1,5 @@
 import { ITrack } from "@/app/interfaces/track.interface"
 
-export interface Album {
-  id: string
-  title: string
-  releaseDate: string
-  artwork: string
-  artists: Artist[]
-  color: string
-  isDownloaded?: boolean
-}
-
 export interface Artist {
   id: string
   name: string

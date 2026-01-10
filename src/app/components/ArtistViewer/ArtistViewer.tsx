@@ -4,16 +4,16 @@ import { FaXmark } from "react-icons/fa6"
 import { LoadingCtx, OpenAlbumCtx, OpenArtistCtx } from "@/app/context"
 import { useContext, useEffect, useState } from "react"
 import axios from "axios"
-import { Album } from "@/lib/interfaces"
 import TinyAlbum from "../TinyAlbum/TinyAlbum"
 import Modal from "../Modal/Modal"
+import { IAlbum } from "@/app/interfaces/album.interface"
 
 
 const ArtistViewer = () => {
   const [loading, setLoading] = useContext(LoadingCtx)!;
   const [openArtist, setOpenArtist] = useContext(OpenArtistCtx)!
   const [openAlbum] = useContext(OpenAlbumCtx)!
-  const [albums, setAlbums] = useState<Array<Album>>([])
+  const [albums, setAlbums] = useState<Array<IAlbum>>([])
   const closeAction = () => setOpenArtist(null);
 
   useEffect(() => {

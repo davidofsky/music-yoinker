@@ -1,13 +1,13 @@
 import { useContext } from "react"
 import axios from "axios"
 import { OpenAlbumCtx, LoadingCtx } from "@/app/context"
-import { Album } from "@/lib/interfaces"
+import { IAlbum } from "../interfaces/album.interface"
 
 export const useOpenAlbum = () => {
   const [, setOpenAlbum] = useContext(OpenAlbumCtx)!
   const [, setLoading] = useContext(LoadingCtx)!
 
-  const openAlbum = async (album: Album) => {
+  const openAlbum = async (album: IAlbum) => {
     setLoading(true)
     try {
       const result = await axios.get("/api/album", {

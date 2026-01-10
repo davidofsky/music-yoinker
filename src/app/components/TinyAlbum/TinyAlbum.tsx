@@ -1,13 +1,12 @@
-import { Album } from "@/lib/interfaces";
-
 import "./TinyAlbum.css"
 import { FaEye, FaCheckCircle } from "react-icons/fa";
 import { useContext } from "react";
-import { LoadingCtx, OpenAlbumCtx } from "@/app/context";
+import { LoadingCtx } from "@/app/context";
 import { useOpenAlbum } from "@/app/hooks/useOpenAlbum";
+import { IAlbum } from "@/app/interfaces/album.interface";
 
 type Props = {
-  album: Album,
+  album: IAlbum,
 }
 
 const TinyAlbum = ({album}: Props) => {

@@ -1,5 +1,5 @@
 "use client"
-import { Album, Artist } from "@/lib/interfaces";
+import { Artist } from "@/lib/interfaces";
 import axios from "axios";
 import { useRef, Dispatch, SetStateAction, useContext, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -9,10 +9,11 @@ import { BrowseMode } from "../Browser/Browser"
 
 import "./SearchBar.css"
 import { ITrack } from "@/app/interfaces/track.interface";
+import { IAlbum } from "@/app/interfaces/album.interface";
 
 type Props = {
   browseMode: BrowseMode,
-  setAlbums: Dispatch<SetStateAction<Album[]>>,
+  setAlbums: Dispatch<SetStateAction<IAlbum[]>>,
   setTracks: Dispatch<SetStateAction<ITrack[]>>
   setArtists: Dispatch<SetStateAction<Artist[]>>
 }

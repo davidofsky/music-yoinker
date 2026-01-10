@@ -2,7 +2,7 @@
 import { useContext, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchBar from "../SearchBar/SearchBar";
-import { Album, Artist } from "@/lib/interfaces";
+import { Artist } from "@/lib/interfaces";
 import ChromaGrid, { ChromaItem } from "../../reactbits/ChromaGrid";
 import { OpenQueueCtx, OpenAlbumCtx, LoadingCtx, OpenArtistCtx } from "@/app/context";
 import { useOpenAlbum } from "@/app/hooks/useOpenAlbum";
@@ -10,6 +10,7 @@ import { useOpenAlbum } from "@/app/hooks/useOpenAlbum";
 import "./Browser.css"
 import axios from "axios";
 import { ITrack } from "@/app/interfaces/track.interface";
+import { IAlbum } from "@/app/interfaces/album.interface";
 
 export enum BrowseMode {
   Albums,
@@ -33,7 +34,7 @@ const Browser = () => {
   const searchParams = useSearchParams();
 
   const [browseMode, setBrowseMode] = useState<BrowseMode>(BrowseMode.Albums)
-  const [albums, setAlbums] = useState<Array<Album>>([])
+  const [albums, setAlbums] = useState<Array<IAlbum>>([])
   const [tracks, setTracks] = useState<Array<ITrack>>([])
   const [artists, setArtists] = useState<Array<Artist>>([])
 
@@ -83,14 +84,14 @@ const Browser = () => {
     setLoading(false);
   }
 
-  const AlbumToCI = (album: Album) : ChromaItem => {
+  const AlbumToCI = (album: IAlbum) : ChromaItem => {
     return {
       image: album.artwork,
       artist: album.artists[0].name,
       year: album.releaseDate.split("-")[0],
       title: `${album.title}`,
       borderColor: "#aaa",
-      gradient: "linear-gradient(145deg, "+album.color+", #000000)",
+      gradient: `linear-gradient(145deg, ${album.vibrantColor}, #000000)`,
       isDownloaded: album.isDownloaded,
       onClick: () => openAlbumFromHook(album)
     }
@@ -102,7 +103,7 @@ const Browser = () => {
       artist: track.artist.name,
       title: track.title,
       borderColor: "#aaa",
-      gradient: `linear-gradient(145deg,${track.album.vibrantColor}, #000000)`,
+      gradient: `linear-gradient(145deg, ${track.album.vibrantColor}, #000000)`,
       isDownloaded: track.isDownloaded,
       onClick: (() => {
         setOpenAlbum({

@@ -1,5 +1,5 @@
 "use client"
-import { useState, Suspense, useEffect } from "react";
+import { useState, Suspense } from "react";
 import Browser from "./components/Browser/Browser";
 import { LoadingCtx, OpenAlbumCtx, OpenQueueCtx, OpenArtistCtx } from "./context"
 import { Artist, DisplayItem } from "@/lib/interfaces";
