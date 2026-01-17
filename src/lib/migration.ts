@@ -7,6 +7,8 @@ import Config from './config';
 
 const execAsync = promisify(exec);
 
+const VERSION_FILE = path.join(process.cwd(), '.last-migration-version');
+
 export interface MigrationMetadata {
   title?: string;
   album?: string;
@@ -178,6 +180,38 @@ class MigrationService {
     const count = await this.migrateDirectory(Config.MUSIC_DIRECTORY);
     console.log(`[Migration] Completed. Migrated ${count} file(s).`);
     return count;
+  }
+
+  public getLastMigratedVersion(): string | null {
+    try {
+      if (fs.existsSync(VERSION_FILE)) {
+        return fs.readFileSync(VERSION_FILE, 'utf-8').trim();
+      }
+    } catch (error) {
+      console.error('[Migration] Failed to read last migrated version:', error);
+    }
+    return null;
+  }
+
+  public saveLastMigratedVersion(version: string): void {
+    try {
+      fs.writeFileSync(VERSION_FILE, version, 'utf-8');
+    } catch (error) {
+      console.error('[Migration] Failed to save last migrated version:', error);
+    }
+  }
+
+  public needsMigration(currentVersion: string): boolean {
+    const lastVersion = this.getLastMigratedVersion();
+    if (!lastVersion) {
+      console.log('[Migration] No previous migration found, migrations needed');
+      return true;
+    }
+    const needsMigration = lastVersion !== currentVersion;
+    if (!needsMigration) {
+      console.log(`[Migration] Already migrated at version ${lastVersion}, skipping migrations`);
+    }
+    return needsMigration;
   }
 }
 

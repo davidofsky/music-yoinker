@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "npm run migrate && next dev",
+    "build": "npm run migrate && next build",
+    "start": "npm run migrate && next start",
     "lint": "eslint",
     "migrate": "tsx scripts/migrate.ts"
   },

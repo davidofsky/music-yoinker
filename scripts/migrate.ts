@@ -32,6 +32,7 @@ async function main() {
   }
 
   const customDir = args.includes('--dir') ? args[args.indexOf('--dir') + 1] : Config.MUSIC_DIRECTORY;
+  const forceRun = args.includes('--force');
 
   console.log('========================================');
   console.log(`Music Yoinker Migration Tool v${version}`);
@@ -39,9 +40,16 @@ async function main() {
   console.log('========================================\n');
 
   try {
+    if (!forceRun && !MigrationService.needsMigration(version)) {
+      console.log('No migrations needed (package version unchanged)');
+      process.exit(0);
+    }
+
     const startTime = Date.now();
     const count = await MigrationService.migrateDirectory(customDir);
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+
+    MigrationService.saveLastMigratedVersion(version);
 
     console.log('\n=========================');
     console.log(`   Migration Complete!`);
