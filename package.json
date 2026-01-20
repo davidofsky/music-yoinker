@@ -21,6 +21,7 @@
     "react-dom": "19.1.0",
     "react-icons": "^5.5.0",
     "tmp": "^0.2.5",
+    "tsx": "^4.20.6",
     "typescript": "^5",
     "uuid": "^13.0.0",
     "ws": "^8.18.3"
@@ -38,7 +39,6 @@
     "esbuild": "^0.25.11",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
-    "tailwindcss": "^4",
-    "tsx": "^4.20.6"
+    "tailwindcss": "^4"
   }
 }
