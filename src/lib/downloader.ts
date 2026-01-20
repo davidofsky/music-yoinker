@@ -7,6 +7,7 @@ import { broadcastQueue } from '@/lib/broadcast';
 import { PegTheFile } from './pegger';
 import Hifi, { DownloadTrackSource } from './hifi'
 import Config from './config';
+import Version from './version';
 import { ITrack } from '@/app/interfaces/track.interface';
 import { IAlbum } from '@/app/interfaces/album.interface';
 
@@ -176,6 +177,7 @@ class Downloader {
         keyScale: track.keyScale || "",
         explicit: track.explicit?.toString() || "",
         track: track.trackNumber?.toString() || "",
+        appVersion: Version.APP_VERSION
       }, track.artwork);
 
       // Move file to correct destination
