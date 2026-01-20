@@ -1,8 +1,10 @@
-# Ignore node modules
-node_modules/
+node_modules
+.next
+out
+build
 
-# Ignorem music folder
 music
-
-# Ignore navidrome data folder
 data
+
+.git
+*.log
