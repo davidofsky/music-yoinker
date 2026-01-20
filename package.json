@@ -1,16 +1,18 @@
 {
-  "name": "music yoinker",
-  "version": "0.0.1",
+  "name": "music-yoinker",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "npm run migrate && next dev",
+    "build": "npm run migrate && next build",
+    "start": "npm run migrate && next start",
+    "lint": "eslint",
+    "migrate": "tsx scripts/migrate.ts"
   },
   "dependencies": {
     "axios": "^1.12.2",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "gsap": "^3.13.0",
     "motion": "^12.23.24",

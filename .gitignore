@@ -3,6 +3,7 @@
 /data
 /music
 /docker-compose.yml
+.last-migration-version
 
 # dependencies
 /node_modules
