@@ -1,3 +1,7 @@
+import dotenv from 'dotenv';
+
+dotenv.config({ path: new URL('../../.env', import.meta.url).pathname });
+
 class Config {
 
   static get TIDAL_CLIENT_ID(): string {
