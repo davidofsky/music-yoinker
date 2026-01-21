@@ -11,5 +11,5 @@ services:
       - MUSIC_DIRECTORY=/app/music
       - DATA_DIRECTORY=/app/data
     volumes:
-      - /home/user/Music/:${MUSIC_DIRECTORY}:rw
-      - /home/user/data/:${DATA_DIRECTORY}:rw
+      - ./music:/app/music:rw
+      - ./data:/app/data:rw
