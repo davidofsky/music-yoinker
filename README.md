@@ -26,18 +26,21 @@ It is intended to be used alongside self-hosted music servers such as **Navidrom
 Copy the `example.env` file to `.env` and fill in the required environment variables. If you use docker-compose, you can also copy `docker-compose.example.yml` to `docker-compose.yml`, it will use the `.env` file automatically.
 
 ### .env variables
+#### Required
 - `TIDAL_CLIENT_ID`: Your TIDAL API client ID.
 - `TIDAL_CLIENT_SECRET`: Your TIDAL API client secret.
 - `HIFI_SOURCES`: Comma-separated list of hifi-api source URLs.
+
+#### Development
+- `MUSIC_DIRECTORY`: The path where music files will be stored outside the container. Make sure to map this to a persistent volume on your host machine.
+- `DATA_DIRECTORY`: The path where application data will be stored outside the container. Make sure to map this to a persistent volume on your host machine.
+
+#### Optional
 - `CLEAN_EXISTING_DOWNLOADS`: (optional) Whether to clean existing downloads before downloading new albums. Default is `false`.
 - `CLEAN_EXISTING_DOWNLOADS_TTL_SECONDS`: (optional) Time-to-live in seconds for cleaning existing downloads. Default is `3600` (1 hour).
 - `TRACK_DISC_SEPARATOR`: (optional) Separator used between disc number and track number in filenames. Default is `.`. When you want to use special characters or spaces, wrap the value in quotes (e.g., `" - "`).
 - `TRACK_TITLE_SEPARATOR`: (optional) Separator used between track number and track title in filenames. Default is ` `. When you want to use special characters or spaces, wrap the value in quotes (e.g., `" - "`).
 - `TRACK_PAD_LENGTH`: (optional) Number of digits to pad track numbers to. Default is `1`.
-
-## Development
-- `MUSIC_DIRECTORY`: The path where music files will be stored outside the container. Make sure to map this to a persistent volume on your host machine.
-- `DATA_DIRECTORY`: The path where application data will be stored outside the container. Make sure to map this to a persistent volume on your host machine.
 
 ## Migrator
 A migration script is built to help migrate existing or old downloads to the new format used by Yoinker. You can run it with:
