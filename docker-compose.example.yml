@@ -1,7 +1,10 @@
 services:
   yoinker:
     container_name: music-yoinker
-    build: .
+    build:
+      context: .
+      args:
+        - MUSIC_DIRECTORY=${MUSIC_DIRECTORY}
     ports:
       - ${FRONTEND_PORT}:${BACKEND_PORT}
     restart: unless-stopped
