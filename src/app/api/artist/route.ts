@@ -1,25 +1,20 @@
 import { NextResponse } from 'next/server';
 import Hifi from '@/lib/hifi';
 import Downloader from '@/lib/downloader';
+import { getQueryParam, validateRequiredParam, addDownloadStatus, handleApiCall } from '@/lib/apiUtils';
 
 export async function GET(req: Request) {
-  const id = new URL(req.url).searchParams.get('id');
-  if (!id) return NextResponse.json({ error: "Parameter 'id' is required" }, { status: 400 });
+  const id = getQueryParam(req, 'id');
+  const validationError = validateRequiredParam(id, 'id');
+  if (validationError) return validationError;
 
-  try {
-    const result = await Hifi.searchArtistAlbums(id);
+  const { data, error } = await handleApiCall(
+    async () => {
+      const result = await Hifi.searchArtistAlbums(id!);
+      return addDownloadStatus(result, (album) => Downloader.IsAlbumDownloaded(album));
+    },
+    'Retrieve failed'
+  );
 
-    const albumsWithStatus = await Promise.all(
-      result.map(async (album) => {
-        const isDownloaded = await Downloader.IsAlbumDownloaded(album);
-        return { ...album, isDownloaded };
-      })
-    );
-
-    return NextResponse.json(albumsWithStatus);
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: 'Retrieve failed' }, { status: 500 });
-  }
+  return error || NextResponse.json(data);
 }
-
