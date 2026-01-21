@@ -1,12 +1,15 @@
 "use client"
-import { FaTasks, FaHourglass, FaDownload, FaTrash } from 'react-icons/fa'
+import { FaTasks } from 'react-icons/fa'
+import { FaXmark } from 'react-icons/fa6';
 import { useQueue } from '@/app/hooks/useQueue';
 import { useContext, useEffect, useState } from 'react';
 import axios from 'axios';
-import { FaXmark } from 'react-icons/fa6';
 import { LoadingCtx, OpenAlbumCtx, OpenArtistCtx, OpenQueueCtx } from '@/app/context';
 import Modal from '@/app/components/Modal/Modal';
 import "./Queue.css"
+import { useGroupedQueue } from '@/app/hooks/useGroupedQueue';
+import { AlbumGroup } from './AlbumGroup';
+import { QueueItemRow } from './QueueItemRow';
 
 const Queue = () => {
   const [openQueue, setOpenQueue] = useContext(OpenQueueCtx)!;
@@ -15,10 +18,13 @@ const Queue = () => {
   const [openArtist] = useContext(OpenArtistCtx)!;
   const queuedTracks = useQueue();
   const [currentDownload, setCurrentDownload] = useState<string|null>(null);
+  const { groupedQueue } = useGroupedQueue(queuedTracks);
 
   useEffect(() => {
     if (queuedTracks.length > 0) {
-      setCurrentDownload(queuedTracks[0].title);
+      const firstTrack = queuedTracks[0];
+      const albumName = firstTrack.album?.title;
+      setCurrentDownload(albumName ? `${firstTrack.title} - ${albumName}` : firstTrack.title);
     } else {
       setCurrentDownload(null);
     }
@@ -32,6 +38,39 @@ const Queue = () => {
     }
   }
 
+  const getGlobalTrackIndex = (groupIndex: number, trackIndexInGroup: number) => {
+    let globalIndex = 0;
+    for (let i = 0; i < groupIndex; i++) {
+      globalIndex += groupedQueue[i].tracks.length;
+    }
+    return globalIndex + trackIndexInGroup;
+  }
+
+  const renderQueueItem = (group: typeof groupedQueue[number], groupIndex: number) => {
+    if (group.type === 'album') {
+      return (
+        <AlbumGroup
+          key={`album-${group.albumId}`}
+          albumName={group.albumName}
+          tracks={group.tracks}
+          getGlobalTrackIndex={(trackIndex) => getGlobalTrackIndex(groupIndex, trackIndex)}
+          onRemoveTrack={removeTrack}
+        />
+      );
+    } else {
+      const track = group.tracks[0];
+      const globalIndex = getGlobalTrackIndex(groupIndex, 0);
+      return (
+        <QueueItemRow
+          key={track.id}
+          track={track}
+          isDownloading={globalIndex === 0}
+          onRemove={removeTrack}
+        />
+      );
+    }
+  }
+
   return (
     <>
       <Modal isOpen={openQueue} onClose={() => setOpenQueue(false)}>
@@ -40,18 +79,7 @@ const Queue = () => {
           {queuedTracks.length === 0 ? (
             <p className='EmptyQueue'>Queue is empty</p>
           ) : (
-            queuedTracks.map((track, i) => (
-              <div className={`QueuedItem ${i === 0 ? 'downloading' : ''}`} key={track.id}>
-                {i === 0 ? <FaDownload/> : <FaHourglass/>}
-                <p>{track.title}</p>
-                {i > 0 && (
-                  <FaTrash
-                    className='CancelQueue'
-                    onClick={() => removeTrack(track.id)}
-                  />
-                )}
-              </div>
-            ))
+            groupedQueue.map((group, groupIndex) => renderQueueItem(group, groupIndex))
           )}
         </div>
         <div className='ModalFooter'>
