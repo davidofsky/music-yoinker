@@ -1,6 +1,10 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 
+ARG MUSIC_DIRECTORY
+
+RUN mkdir -p ${MUSIC_DIRECTORY}
+
 COPY package*.json ./
 RUN npm ci
 RUN apk add --no-cache ffmpeg
