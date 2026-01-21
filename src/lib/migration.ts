@@ -7,7 +7,7 @@ import Config from './config';
 
 const execAsync = promisify(exec);
 
-const VERSION_FILE = path.join(process.cwd(), '.last-migration-version');
+const VERSION_FILE = path.join(Config.DATA_DIRECTORY, '.last-migration-version');
 
 export interface MigrationMetadata {
   title?: string;

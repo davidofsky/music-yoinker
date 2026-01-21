@@ -1,11 +1,4 @@
 class Config {
-  static get BACKEND_PORT(): number {
-    return validateNumber(process.env.BACKEND_PORT, 3000);
-  }
-
-  static get FRONTEND_PORT(): number {
-    return validateNumber(process.env.FRONTEND_PORT, 8080);
-  }
 
   static get TIDAL_CLIENT_ID(): string {
     return process.env.TIDAL_CLIENT_ID || '';
@@ -23,8 +16,8 @@ class Config {
     return process.env.MUSIC_DIRECTORY || '';
   }
 
-  static get HOST_MUSIC_DIRECTORY(): string {
-    return process.env.HOST_MUSIC_DIRECTORY || '';
+  static get DATA_DIRECTORY(): string {
+    return process.env.DATA_DIRECTORY || '';
   }
 
   static get CLEAN_EXISTING_DOWNLOADS(): boolean {
