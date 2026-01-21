@@ -35,7 +35,7 @@ const Queue = () => {
   return (
     <>
       <Modal isOpen={openQueue} onClose={() => setOpenQueue(false)}>
-        <span>Download queue</span>
+        <h1 className='ModalTitle'>Download queue {queuedTracks.length > 0 && `(${queuedTracks.length} remaining)`}</h1>
         <div className='QueuedList'>
           {queuedTracks.length === 0 ? (
             <p className='EmptyQueue'>Queue is empty</p>
