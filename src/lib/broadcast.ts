@@ -47,7 +47,7 @@ export async function broadcast(msg: string, topic: Topic) {
   const state = getState();
   const topicClients = state.clientControllers.filter(c => c.topic === topic);
 
-  logger.info(`[Broadcast] Broadcasting to ${topicClients.length} clients on topic ${Topic[topic]}`);
+  console.info(`[Broadcast] Broadcasting to ${topicClients.length} clients on topic ${Topic[topic]}`);
 
   const message = encoder.encode(`data: ${msg}\n\n`);
   const deadClients: string[] = [];
@@ -55,9 +55,9 @@ export async function broadcast(msg: string, topic: Topic) {
   topicClients.forEach((listener) => {
     try {
       listener.controller.enqueue(message);
-      logger.info(`[Broadcast] Sent to client ${listener.clientId}`);
+      console.info(`[Broadcast] Sent to client ${listener.clientId}`);
     } catch (err) {
-      logger.error(`[Broadcast] Failed to send to client ${listener.clientId}:`, err);
+      console.error(`[Broadcast] Failed to send to client ${listener.clientId}:`, err);
       deadClients.push(listener.clientId);
     }
   });

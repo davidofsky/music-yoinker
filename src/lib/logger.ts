@@ -78,7 +78,7 @@ logger.on('data', (log) => {
     }),
     Topic.log
   ).catch((err: any) => {
-    logger.error('Failed to broadcast log:', err);
+    console.error('Failed to broadcast log:', err);
   });
 });
 
@@ -92,4 +92,3 @@ if (!global.logger) {
 }
 
 export default global.logger;
-
