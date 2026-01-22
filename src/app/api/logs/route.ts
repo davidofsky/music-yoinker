@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const logsPath = path.join(process.cwd(), 'logs', 'combined.log');
+    const logsPath = path.join(process.cwd(), 'logs', 'combined.ndjson');
     const logs = fs.readFileSync(logsPath, 'utf8');
     const logLines = logs.split('\n').filter(line => line.trim() !== '');
 

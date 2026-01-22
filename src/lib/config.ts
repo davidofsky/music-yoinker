@@ -7,6 +7,10 @@ class Config {
     return validateNumber(process.env.FRONTEND_PORT, 8080);
   }
 
+  static get LOG_LEVEL(): string {
+    return process.env.LOG_LEVEL || 'info';
+  }
+
   static get TIDAL_CLIENT_ID(): string {
     return process.env.TIDAL_CLIENT_ID || '';
   }
