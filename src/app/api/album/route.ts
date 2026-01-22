@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
 import Hifi from '@/lib/hifi';
+import { getQueryParam, validateRequiredParam, handleApiCall } from '@/lib/apiUtils';
 
 export async function GET(req: Request) {
-  const id = new URL(req.url).searchParams.get('id');
-  if (!id) return NextResponse.json({ error: "Parameter 'id' is required" }, { status: 400 });
+  const id = getQueryParam(req, 'id');
+  const validationError = validateRequiredParam(id, 'id');
+  if (validationError) return validationError;
 
-  try {
-    const result = await Hifi.searchAlbumTracks(id);
-    return NextResponse.json(result);
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: 'Retrieve failed' }, { status: 500 });
-  }
+  const { data, error } = await handleApiCall(
+    () => Hifi.searchAlbumTracks(id!),
+    'Retrieve failed'
+  );
+
+  return error || NextResponse.json(data);
 }
-

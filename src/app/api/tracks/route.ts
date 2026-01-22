@@ -1,42 +1,38 @@
 import { NextResponse } from 'next/server';
 import Downloader from '@/lib/downloader';
 import Hifi from '@/lib/hifi';
+import { getQueryParam, validateRequiredParam, addDownloadStatus, handleApiCall } from '@/lib/apiUtils';
 
 export async function GET(req: Request) {
-  const query = new URL(req.url).searchParams.get('query');
-  if (!query) {
-    return NextResponse.json({ error: "Parameter 'query' is required" }, { status: 400 });
-  }
+  const query = getQueryParam(req, 'query');
+  const validationError = validateRequiredParam(query, 'query');
+  if (validationError) return validationError;
 
-  try {
-    const result = await Hifi.searchTrack(query);
+  const { data, error } = await handleApiCall(
+    async () => {
+      const result = await Hifi.searchTrack(query!);
+      return addDownloadStatus(result, (track) => Downloader.IsTrackDownloaded(track));
+    },
+    'Search failed'
+  );
 
-    const tracksWithStatus = await Promise.all(
-      result.map(async (track) => {
-        const isDownloaded = await Downloader.IsTrackDownloaded(track);
-        return { ...track, isDownloaded };
-      })
-    );
-
-    return NextResponse.json(tracksWithStatus);
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: 'Search failed' }, { status: 500 });
-  }
+  return error || NextResponse.json(data);
 }
 
 export async function POST(req: Request) {
-  try {
-    const tracks = await req.json();
+  const { data, error } = await handleApiCall(
+    async () => {
+      const tracks = await req.json();
 
-    if (!Array.isArray(tracks)) {
-      return NextResponse.json({ error: 'Invalid tracks data' }, { status: 400 });
-    }
+      if (!Array.isArray(tracks)) {
+        throw new Error('Invalid tracks data');
+      }
 
-    Downloader.AddToQueue(tracks);
-    return NextResponse.json({ status: 'OK' });
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: 'Failed to add to queue' }, { status: 500 });
-  }
+      Downloader.AddToQueue(tracks);
+      return { status: 'OK' };
+    },
+    'Failed to add to queue'
+  );
+
+  return error || NextResponse.json(data);
 }

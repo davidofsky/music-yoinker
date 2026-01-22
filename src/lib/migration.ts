@@ -107,7 +107,8 @@ class MigrationService {
       return false;
     }
 
-    console.log(`[Migration] Checking migrations for ${path.basename(filePath)} (v${fileVersion || 'unknown'} -> v${Version.APP_VERSION})`);
+    const versionDisplay = fileVersion ? `V${fileVersion}` : 'unknown';
+    console.log(`[Migration] Checking migrations for ${path.basename(filePath)} (${versionDisplay} -> V${Version.APP_VERSION})`);
 
     let migrated = false;
 
