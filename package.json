@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "npm run migrate && next dev",
-    "build": "npm run migrate && next build",
+    "build": "next build",
     "start": "npm run migrate && next start",
     "lint": "eslint",
     "migrate": "tsx scripts/migrate.ts"
