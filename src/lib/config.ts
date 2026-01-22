@@ -63,10 +63,4 @@ class Config {
   }
 }
 
-function validateNumber(value: string | undefined, defaultValue: number): number {
-  if (!value) return defaultValue;
-  const port = parseInt(value, 10);
-  return Number.isFinite(port) && port > 0 ? port : defaultValue;
-}
-
 export default Config;

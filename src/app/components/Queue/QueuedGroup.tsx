@@ -1,21 +1,21 @@
 import { QueueItemRow } from './QueueItemRow';
 import { ITrack } from '@/app/interfaces/track.interface';
 
-interface AlbumGroupProps {
-  albumName?: string;
+interface QueuedGroupProps {
+  title?: string;
   tracks: ITrack[];
   getGlobalTrackIndex: (trackIndexInGroup: number) => number;
   onRemoveTrack: (trackId: number) => void;
 }
 
-export function AlbumGroup({ albumName, tracks, getGlobalTrackIndex, onRemoveTrack }: AlbumGroupProps) {
+export function QueuedGroup({ title, tracks, getGlobalTrackIndex, onRemoveTrack }: QueuedGroupProps) {
   return (
-    <div className='AlbumGroup'>
-      <div className='AlbumGroupHeader'>
-        <p className='AlbumGroupTitle'>{albumName}</p>
-        <span className='AlbumTrackCount'>{tracks.length} tracks</span>
+    <div className='QueuedGroup'>
+      <div className='QueuedGroupHeader'>
+        <p className='QueuedGroupTitle'>{title}</p>
+        <span className='QueuedGroupItemCount'>{tracks.length} tracks</span>
       </div>
-      <div className='AlbumGroupTracks'>
+      <div className='QueuedGroupItems'>
         {tracks.map((track, trackIndex) => (
           <QueueItemRow
             key={track.id}

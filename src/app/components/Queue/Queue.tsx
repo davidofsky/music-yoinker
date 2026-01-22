@@ -8,8 +8,8 @@ import { LoadingCtx, OpenAlbumCtx, OpenArtistCtx, OpenQueueCtx } from '@/app/con
 import Modal from '@/app/components/Modal/Modal';
 import "./Queue.css"
 import { useGroupedQueue } from '@/app/hooks/useGroupedQueue';
-import { AlbumGroup } from './AlbumGroup';
 import { QueueItemRow } from './QueueItemRow';
+import { QueuedGroup } from './QueuedGroup';
 
 const Queue = () => {
   const [openQueue, setOpenQueue] = useContext(OpenQueueCtx)!;
@@ -49,9 +49,9 @@ const Queue = () => {
   const renderQueueItem = (group: typeof groupedQueue[number], groupIndex: number) => {
     if (group.type === 'album') {
       return (
-        <AlbumGroup
+        <QueuedGroup
           key={`album-${group.albumId}`}
-          albumName={group.albumName}
+          title={group.albumName}
           tracks={group.tracks}
           getGlobalTrackIndex={(trackIndex) => getGlobalTrackIndex(groupIndex, trackIndex)}
           onRemoveTrack={removeTrack}
