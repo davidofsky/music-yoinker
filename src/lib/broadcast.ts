@@ -1,9 +1,4 @@
-import logger from './logger'
-
-export enum Topic {
-  queue,
-  log
-}
+import { ITrack } from '@/app/interfaces/track.interface';
 
 type ClientControllerList = Array<{
   topic: Topic,
@@ -37,22 +32,15 @@ export function removeClient(clientId: string) {
   state.clientControllers = state.clientControllers.filter(c => c.clientId !== clientId);
 }
 
-
-const encoder = new TextEncoder();
-/*
- * Do NOT use the logger in the broadcast function,
- * because the logger uses this function itself which would create an infinite loop
- */
-export async function broadcast(msg: string, topic: Topic) {
+export async function broadcastQueue(queue: ITrack[]) {
   const state = getState();
-  const topicClients = state.clientControllers.filter(c => c.topic === topic);
+  console.info(`[Broadcast] Broadcasting to ${state.clientControllers.size} clients`);
 
-  console.info(`[Broadcast] Broadcasting to ${topicClients.length} clients on topic ${Topic[topic]}`);
-
-  const message = encoder.encode(`data: ${msg}\n\n`);
+  const encoder = new TextEncoder();
+  const message = encoder.encode(`data: ${JSON.stringify(queue)}\n\n`);
   const deadClients: string[] = [];
 
-  topicClients.forEach((listener) => {
+  state.clientControllers.forEach((controller, clientId) => {
     try {
       listener.controller.enqueue(message);
       console.info(`[Broadcast] Sent to client ${listener.clientId}`);

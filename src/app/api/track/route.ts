@@ -1,19 +1,22 @@
 import { NextResponse } from 'next/server';
 import Downloader from '@/lib/downloader';
+import { getQueryParam, validateRequiredParam, handleApiCall } from '@/lib/apiUtils';
 
 export async function DELETE(req: Request) {
-  const id = new URL(req.url).searchParams.get('id');
-  if (!id) return NextResponse.json({ error: "Parameter 'id' is required" }, { status: 400 });
+  const id = getQueryParam(req, 'id');
+  const validationError = validateRequiredParam(id, 'id');
+  if (validationError) return validationError;
 
-  try {
-    const errorMessage = Downloader.RemoveFromQueue(id);
-    if (errorMessage) {
-      return NextResponse.json({ status: 'Bad request', message: errorMessage }, { status: 400 });
-    }
-    return NextResponse.json({ status: 'OK' });
-  } catch (err) {
-    logger.error(err);
-    return NextResponse.json({ error: 'Failed to remove from queue' }, { status: 500 });
-  }
+  const { data, error } = await handleApiCall(
+    async () => {
+      const errorMessage = Downloader.RemoveFromQueue(id!);
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
+      return { status: 'OK' };
+    },
+    'Failed to remove from queue'
+  );
+
+  return error || NextResponse.json(data);
 }
-

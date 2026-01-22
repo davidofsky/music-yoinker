@@ -1,11 +1,8 @@
-class Config {
-  static get BACKEND_PORT(): number {
-    return validateNumber(process.env.BACKEND_PORT, 3000);
-  }
+import dotenv from 'dotenv';
 
-  static get FRONTEND_PORT(): number {
-    return validateNumber(process.env.FRONTEND_PORT, 8080);
-  }
+dotenv.config({ path: new URL('../../.env', import.meta.url).pathname });
+
+class Config {
 
   static get LOG_LEVEL(): string {
     return process.env.LOG_LEVEL || 'info';
@@ -27,8 +24,8 @@ class Config {
     return process.env.MUSIC_DIRECTORY || '';
   }
 
-  static get HOST_MUSIC_DIRECTORY(): string {
-    return process.env.HOST_MUSIC_DIRECTORY || '';
+  static get DATA_DIRECTORY(): string {
+    return process.env.DATA_DIRECTORY || '';
   }
 
   static get CLEAN_EXISTING_DOWNLOADS(): boolean {
@@ -68,12 +65,6 @@ class Config {
     }
     return value;
   }
-}
-
-function validateNumber(value: string | undefined, defaultValue: number): number {
-  if (!value) return defaultValue;
-  const port = parseInt(value, 10);
-  return Number.isFinite(port) && port > 0 ? port : defaultValue;
 }
 
 export default Config;

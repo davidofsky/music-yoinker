@@ -2,13 +2,15 @@
 import { useContext, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchBar from "../SearchBar/SearchBar";
-import { Album, Artist, Track } from "@/lib/interfaces";
 import ChromaGrid, { ChromaItem } from "../../reactbits/ChromaGrid";
 import { OpenQueueCtx, OpenAlbumCtx, LoadingCtx, OpenArtistCtx } from "@/app/context";
 import { useOpenAlbum } from "@/app/hooks/useOpenAlbum";
 
 import "./Browser.css"
 import axios from "axios";
+import { ITrack } from "@/app/interfaces/track.interface";
+import { IAlbum } from "@/app/interfaces/album.interface";
+import { IArtist } from "@/app/interfaces/artist.interface";
 
 export enum BrowseMode {
   Albums,
@@ -32,9 +34,9 @@ const Browser = () => {
   const searchParams = useSearchParams();
 
   const [browseMode, setBrowseMode] = useState<BrowseMode>(BrowseMode.Albums)
-  const [albums, setAlbums] = useState<Array<Album>>([])
-  const [tracks, setTracks] = useState<Array<Track>>([])
-  const [artists, setArtists] = useState<Array<Artist>>([])
+  const [albums, setAlbums] = useState<Array<IAlbum>>([])
+  const [tracks, setTracks] = useState<Array<ITrack>>([])
+  const [artists, setArtists] = useState<Array<IArtist>>([])
 
   useEffect(() => {
     const query = searchParams.get('q');
@@ -82,30 +84,31 @@ const Browser = () => {
     setLoading(false);
   }
 
-  const AlbumToCI = (album: Album) : ChromaItem => {
+  const AlbumToCI = (album: IAlbum) : ChromaItem => {
     return {
       image: album.artwork,
-      subtitle: album.artists[0].name,
-      title: `${album.title} (${album.releaseDate.split("-")[0]})`,
+      artist: album.artists[0].name,
+      year: album.releaseDate.split("-")[0],
+      title: `${album.title}`,
       borderColor: "#aaa",
-      gradient: "linear-gradient(145deg, "+album.color+", #000000)",
+      gradient: `linear-gradient(145deg, ${album.vibrantColor}, #000000)`,
       isDownloaded: album.isDownloaded,
       onClick: () => openAlbumFromHook(album)
     }
   }
 
-  const TrackToCI = (track: Track) : ChromaItem => {
+  const TrackToCI = (track: ITrack) : ChromaItem => {
     return {
       image: track.artwork,
-      subtitle: track.artist,
+      artist: track.artist.name,
       title: track.title,
       borderColor: "#aaa",
-      gradient: "linear-gradient(145deg, "+track.album.color+", #000000)",
+      gradient: `linear-gradient(145deg, ${track.album.vibrantColor}, #000000)`,
       isDownloaded: track.isDownloaded,
       onClick: (() => {
         setOpenAlbum({
           Title: track.album.title,
-          Artist: track.artist,
+          Artist: track.artist.name,
           Type: "Single",
           Tracks: [track]
         });
@@ -113,10 +116,9 @@ const Browser = () => {
     }
   }
 
-  const ArtistToCI = (artist: Artist) : ChromaItem => {
+  const ArtistToCI = (artist: IArtist) : ChromaItem => {
     return {
       image: artist.picture,
-      subtitle: "",
       title: artist.name,
       borderColor: "#aaa",
       gradient: "linear-gradient(145deg, #1f1f1f, #000000)",

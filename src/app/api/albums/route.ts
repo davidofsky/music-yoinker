@@ -1,32 +1,20 @@
 import { NextResponse } from 'next/server';
 import Downloader from '@/lib/downloader';
 import Hifi from '@/lib/hifi';
-import logger from '@lib/logger';
+import { getQueryParam, validateRequiredParam, addDownloadStatus, handleApiCall } from '@/lib/apiUtils';
 
 export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const query = url.searchParams.get('query');
+  const query = getQueryParam(req, 'query');
+  const validationError = validateRequiredParam(query, 'query');
+  if (validationError) return validationError;
 
-  if (!query) {
-    return NextResponse.json({ 
-      error: "Parameter 'query' is required" }, 
-      { status: 400 });
-  }
+  const { data, error } = await handleApiCall(
+    async () => {
+      const result = await Hifi.searchAlbum(query!);
+      return addDownloadStatus(result, (album) => Downloader.IsAlbumDownloaded(album));
+    },
+    'Search failed'
+  );
 
-  try {
-    const result = await Hifi.searchAlbum(query);
-
-    const albumsWithStatus = await Promise.all(
-      result.map(async (album) => {
-        const isDownloaded = await Downloader.IsAlbumDownloaded(album);
-        return { ...album, isDownloaded };
-      })
-    );
-
-    return NextResponse.json(albumsWithStatus);
-  } catch (err) {
-    logger.error(err);
-    return NextResponse.json({ error: 'Search failed' }, { status: 500 });
-  }
+  return error || NextResponse.json(data);
 }
-

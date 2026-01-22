@@ -3,9 +3,13 @@ services:
     container_name: music-yoinker
     build: .
     ports:
-      - ${FRONTEND_PORT}:${BACKEND_PORT}
+      - 8080:3000
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      - MUSIC_DIRECTORY=/app/music
+      - DATA_DIRECTORY=/app/data
     volumes:
-      - ${HOST_MUSIC_DIRECTORY}:${MUSIC_DIRECTORY}:rw
+      - ./music:/app/music:rw
+      - ./data:/app/data:rw
