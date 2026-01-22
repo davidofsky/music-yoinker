@@ -12,7 +12,6 @@ export function useQueue() : ITrack[] {
     }
 
     es.onmessage = (e) => {
-      console.log(e)
       if (!e.data) return;
       const data: typeof queue = JSON.parse(e.data);
       console.log(data)

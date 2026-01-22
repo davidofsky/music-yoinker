@@ -1,4 +1,9 @@
-import { ITrack } from '@/app/interfaces/track.interface';
+import logger from './logger'
+
+export enum Topic {
+  queue,
+  log
+}
 
 type ClientControllerList = Array<{
   topic: Topic,
@@ -32,20 +37,27 @@ export function removeClient(clientId: string) {
   state.clientControllers = state.clientControllers.filter(c => c.clientId !== clientId);
 }
 
-export async function broadcastQueue(queue: ITrack[]) {
-  const state = getState();
-  console.info(`[Broadcast] Broadcasting to ${state.clientControllers.size} clients`);
 
-  const encoder = new TextEncoder();
-  const message = encoder.encode(`data: ${JSON.stringify(queue)}\n\n`);
+const encoder = new TextEncoder();
+/*
+ * Do NOT use the logger in the broadcast function,
+ * because the logger uses this function itself which would create an infinite loop
+ */
+export async function broadcast(msg: string, topic: Topic) {
+  const state = getState();
+  const topicClients = state.clientControllers.filter(c => c.topic === topic);
+
+  logger.info(`[Broadcast] Broadcasting to ${topicClients.length} clients on topic ${Topic[topic]}`);
+
+  const message = encoder.encode(`data: ${msg}\n\n`);
   const deadClients: string[] = [];
 
-  state.clientControllers.forEach((controller, clientId) => {
+  topicClients.forEach((listener) => {
     try {
       listener.controller.enqueue(message);
-      console.info(`[Broadcast] Sent to client ${listener.clientId}`);
+      logger.info(`[Broadcast] Sent to client ${listener.clientId}`);
     } catch (err) {
-      console.error(`[Broadcast] Failed to send to client ${listener.clientId}:`, err);
+      logger.error(`[Broadcast] Failed to send to client ${listener.clientId}:`, err);
       deadClients.push(listener.clientId);
     }
   });

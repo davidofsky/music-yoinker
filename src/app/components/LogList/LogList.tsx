@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { FaCircleInfo, FaCircleExclamation, FaXmark, FaTriangleExclamation } from "react-icons/fa6";
 import { Log } from "@/lib/logger";
 import "./LogList.css"
+import { useLog } from "@/app/hooks/useLog";
 
 const getLogIcon = (level: string) => {
     switch (level) {
@@ -17,14 +18,11 @@ const getLogIcon = (level: string) => {
     }
 };
 
-interface LogListProps {
-    logs: Log[];
-}
-
-export function LogList({ logs }: LogListProps) {
+export function LogList() {
     const listRef = useRef<HTMLDivElement | null>(null);
     const bottomRef = useRef<HTMLDivElement | null>(null);
     const [sticky, setSticky] = useState(true);
+    const logs = useLog();
 
     useEffect(() => {
         if (sticky) {

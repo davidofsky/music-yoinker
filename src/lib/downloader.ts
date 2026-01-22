@@ -104,7 +104,7 @@ class Downloader {
     let tmpFile: tmp.FileResult | null = null;
 
     try {
-      console.info(`Downloading track: ${track.title}`);
+      logger.info(`Downloading track: ${track.title}`);
       const downloadSource: DownloadTrackSource = await Hifi.downloadTrack(track.id.toString());
       const tidalAlbum = Tidal.getAlbum(track.album.id.toString());
 

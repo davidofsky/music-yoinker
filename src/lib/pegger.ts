@@ -24,7 +24,7 @@ export const PegTheFile = async (
     const extension:string = filePath.split(".").pop()||".flac";
     logger.debug(`Retrieved extension,  ${extension}`)
     tempFile = path.join(tmpdir(), `track-${Date.now()}.${extension}`);
-    console.info(filePath, metadata, tempFile)
+    logger.info(filePath, metadata, tempFile)
 
     const metadataArgs = Object.entries(metadata)
       .map(([k, v]) => {

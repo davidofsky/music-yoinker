@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import logger from "./logger";
 import Version from './version';
 import Config from './config';
 
@@ -32,7 +33,7 @@ class MigrationService {
 
   public registerRule(rule: MigrationRule): void {
     this.rules.push(rule);
-    console.log(`[Migration] Registered rule: ${rule.name} (${rule.fromVersion} -> ${rule.toVersion})`);
+    logger.info(`[Migration] Registered rule: ${rule.name} (${rule.fromVersion} -> ${rule.toVersion})`);
   }
 
   private async extractMetadata(filePath: string): Promise<MigrationMetadata> {
@@ -51,7 +52,7 @@ class MigrationService {
 
       return metadata;
     } catch (error) {
-      console.error(`[Migration] Failed to extract metadata from ${filePath}:`, error);
+      logger.info(`[Migration] Failed to extract metadata from ${filePath}:`, error);
       return {};
     }
   }
@@ -80,9 +81,9 @@ class MigrationService {
       fs.copyFileSync(tempFile, filePath);
       fs.rmSync(tempFile);
 
-      console.log(`[Migration] Successfully updated metadata for ${path.basename(filePath)}`);
+      logger.info(`[Migration] Successfully updated metadata for ${path.basename(filePath)}`);
     } catch (error) {
-      console.error(`[Migration] Failed to update metadata for ${filePath}:`, error);
+      logger.error(`[Migration] Failed to update metadata for ${filePath}:`, error);
 
       // Cleanup temp file on error
       if (fs.existsSync(tempFile)) {
@@ -95,7 +96,7 @@ class MigrationService {
 
   public async checkAndMigrate(filePath: string): Promise<boolean> {
     if (!fs.existsSync(filePath)) {
-      console.warn(`[Migration] File not found: ${filePath}`);
+      logger.warn(`[Migration] File not found: ${filePath}`);
       return false;
     }
 
@@ -103,12 +104,12 @@ class MigrationService {
     const fileVersion = metadata.appversion || metadata.appVersion;
 
     if (!Version.needsMigration(fileVersion)) {
-      console.debug(`[Migration] File is up-to-date: ${path.basename(filePath)} (v${fileVersion})`);
+      logger.debug(`[Migration] File is up-to-date: ${path.basename(filePath)} (v${fileVersion})`);
       return false;
     }
 
     const versionDisplay = fileVersion ? `V${fileVersion}` : 'unknown';
-    console.log(`[Migration] Checking migrations for ${path.basename(filePath)} (${versionDisplay} -> V${Version.APP_VERSION})`);
+    logger.info(`[Migration] Checking migrations for ${path.basename(filePath)} (${versionDisplay} -> V${Version.APP_VERSION})`);
 
     let migrated = false;
 
@@ -116,20 +117,20 @@ class MigrationService {
       const shouldApply = this.shouldApplyRule(rule, fileVersion);
 
       if (shouldApply && rule.shouldMigrate(metadata, filePath)) {
-        console.log(`[Migration] Applying: ${rule.name}`);
+        logger.info(`[Migration] Applying: ${rule.name}`);
 
         try {
           await rule.migrate(filePath, metadata);
           migrated = true;
         } catch (error) {
-          console.error(`[Migration] Failed to apply rule "${rule.name}":`, error);
+          logger.error(`[Migration] Failed to apply rule "${rule.name}":`, error);
         }
       }
     }
 
     if (migrated || Version.needsMigration(fileVersion)) {
       await this.updateMetadata(filePath, { appVersion: Version.APP_VERSION });
-      console.log(`[Migration] Updated ${path.basename(filePath)} to v${Version.APP_VERSION}`);
+      logger.info(`[Migration] Updated ${path.basename(filePath)} to v${Version.APP_VERSION}`);
       return true;
     }
 
@@ -148,7 +149,7 @@ class MigrationService {
 
   public async migrateDirectory(dirPath: string): Promise<number> {
     if (!fs.existsSync(dirPath)) {
-      console.warn(`[Migration] Directory not found: ${dirPath}`);
+      logger.warn(`[Migration] Directory not found: ${dirPath}`);
       return 0;
     }
 
@@ -167,7 +168,7 @@ class MigrationService {
             const migrated = await this.checkAndMigrate(fullPath);
             if (migrated) migratedCount++;
           } catch (error) {
-            console.error(`[Migration] Error processing ${fullPath}:`, error);
+            logger.error(`[Migration] Error processing ${fullPath}:`, error);
           }
         }
       }
@@ -177,9 +178,9 @@ class MigrationService {
   }
 
   public async migrateAll(): Promise<number> {
-    console.log(`[Migration] Starting migration of all files in ${Config.MUSIC_DIRECTORY}`);
+    logger.info(`[Migration] Starting migration of all files in ${Config.MUSIC_DIRECTORY}`);
     const count = await this.migrateDirectory(Config.MUSIC_DIRECTORY);
-    console.log(`[Migration] Completed. Migrated ${count} file(s).`);
+    logger.info(`[Migration] Completed. Migrated ${count} file(s).`);
     return count;
   }
 
@@ -189,7 +190,7 @@ class MigrationService {
         return fs.readFileSync(VERSION_FILE, 'utf-8').trim();
       }
     } catch (error) {
-      console.error('[Migration] Failed to read last migrated version:', error);
+      logger.error('[Migration] Failed to read last migrated version:', error);
     }
     return null;
   }
@@ -198,19 +199,19 @@ class MigrationService {
     try {
       fs.writeFileSync(VERSION_FILE, version, 'utf-8');
     } catch (error) {
-      console.error('[Migration] Failed to save last migrated version:', error);
+      logger.error('[Migration] Failed to save last migrated version:', error);
     }
   }
 
   public needsMigration(currentVersion: string): boolean {
     const lastVersion = this.getLastMigratedVersion();
     if (!lastVersion) {
-      console.log('[Migration] No previous migration found, migrations needed');
+      logger.info('[Migration] No previous migration found, migrations needed');
       return true;
     }
     const needsMigration = lastVersion !== currentVersion;
     if (!needsMigration) {
-      console.log(`[Migration] Already migrated at version ${lastVersion}, skipping migrations`);
+      logger.info(`[Migration] Already migrated at version ${lastVersion}, skipping migrations`);
     }
     return needsMigration;
   }

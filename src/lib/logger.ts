@@ -77,8 +77,8 @@ logger.on('data', (log) => {
       timestamp: new Date().toISOString()
     }),
     Topic.log
-  ).catch(err => {
-    console.error('Failed to broadcast log:', err);
+  ).catch((err: any) => {
+    logger.error('Failed to broadcast log:', err);
   });
 });
 
