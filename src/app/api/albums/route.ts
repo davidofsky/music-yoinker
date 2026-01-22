@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Downloader from '@/lib/downloader';
 import Hifi from '@/lib/hifi';
+import logger from '@lib/logger';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -24,7 +25,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(albumsWithStatus);
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return NextResponse.json({ error: 'Search failed' }, { status: 500 });
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import logger from '@lib/logger';
 import Downloader from '@/lib/downloader';
 
 export async function GET() {
@@ -6,7 +7,7 @@ export async function GET() {
     const queue = Downloader.GetQueue();
     return NextResponse.json(queue);
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return NextResponse.json({ error: 'Failed to get queue' }, { status: 500 });
   }
 }

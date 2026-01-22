@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import logger from '@/lib/logger';
 import Hifi from '@/lib/hifi';
 
 export async function GET(req: Request) {
@@ -9,7 +10,7 @@ export async function GET(req: Request) {
     const result = await Hifi.searchArtist(query);
     return NextResponse.json(result);
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return NextResponse.json({ error: 'Search failed' }, { status: 500 });
   }
 }

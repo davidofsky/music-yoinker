@@ -5,7 +5,7 @@ export function useQueue() : Track[] {
   const [queue, setQueue] = useState<Track[]>([]);
 
   useEffect(() => {
-    const es = new EventSource('/api/queue/stream');
+    const es = new EventSource('/api/stream?topic=queue');
 
     es.onopen = () => {
       console.info("Connected to queue stream")

@@ -2,6 +2,7 @@
 import axios from 'axios';
 import { Album, Artist, Track } from './interfaces';
 import Config from './config';
+import logger from './logger';
 
 export type DownloadTrackSource =
   | { type: 'direct'; url: string; mimeType?: string | null }
@@ -28,11 +29,11 @@ class Hifi {
     for (let attempt = 0; attempt < totalAttempts; attempt++) {
       const currentSource = sources[this.hifiSource % sources.length];
       try {
-        console.log(`[${operationName}] Attempt ${attempt + 1}/${totalAttempts} using source: ${currentSource}`);
+        logger.info(`[${operationName}] Attempt ${attempt + 1}/${totalAttempts} using source: ${currentSource}`);
         return await operation(currentSource);
       } catch (error) {
         lastError = error;
-        console.error(`[${operationName}] Failed with source ${currentSource}:`, (error as Error)?.message ?? error);
+        logger.error(`[${operationName}] Failed with source ${currentSource}:`, error);
 
         // Move to next source
         this.hifiSource = (this.hifiSource + 1) % sources.length;
@@ -51,6 +52,7 @@ class Hifi {
         headers: this.DEFAULT_HEADERS,
         params: { al: query }
       });
+
 
       const items = result.data.data?.albums?.items || [];
       const albums = await Promise.all(items.map((album: any) => this.parseAlbum(album)));
@@ -166,7 +168,7 @@ class Hifi {
         headers: this.DEFAULT_HEADERS,
         params: { id }
       });
-      console.log(result.data.data)
+      logger.info(result.data.data)
 
       return this.parseAlbum(result.data.data);
     }, 'DownloadAlbum');
@@ -253,7 +255,7 @@ class Hifi {
       if (!map.has(key)) map.set(key, a);
     }
 
-    console.log(`[RemoveDoubleAlbums] Reduced from ${albums.length} to ${map.size} albums.`);
+    logger.info(`[RemoveDoubleAlbums] Reduced from ${albums.length} to ${map.size} albums.`);
 
     return Array.from(map.values());
   }

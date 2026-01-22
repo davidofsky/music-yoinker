@@ -12,7 +12,7 @@ export async function DELETE(req: Request) {
     }
     return NextResponse.json({ status: 'OK' });
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return NextResponse.json({ error: 'Failed to remove from queue' }, { status: 500 });
   }
 }

@@ -1,5 +1,5 @@
 "use client"
-import { useState, Suspense, useEffect } from "react";
+import { useState, Suspense } from "react";
 import Browser from "./components/Browser/Browser";
 import { LoadingCtx, OpenAlbumCtx, OpenQueueCtx, OpenArtistCtx } from "./context"
 import { Artist, DisplayItem } from "@/lib/interfaces";
@@ -15,7 +15,6 @@ export default function Home() {
         <OpenArtistCtx.Provider value={useState<Artist|null>(null)}>
           <OpenQueueCtx.Provider value={useState<boolean>(false)}>
             <LoadingCtx.Provider value={useState<boolean>(false)}>
-
               <Loading />
               <AlbumViewer />
               <ArtistViewer />

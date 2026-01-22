@@ -5,11 +5,6 @@
   flex-direction: column;
 }
 
-.Title {
-  font-size: 200%;
-  padding: 1em;
-}
-
 .LoadingBackground {
   display: flex;
   justify-content: center;

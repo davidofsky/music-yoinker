@@ -20,7 +20,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(tracksWithStatus);
   } catch (err) {
-    console.error(err);
+    loggererror(err);
     return NextResponse.json({ error: 'Search failed' }, { status: 500 });
   }
 }
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
     Downloader.AddToQueue(tracks);
     return NextResponse.json({ status: 'OK' });
   } catch (err) {
-    console.error(err);
+    loggererror(err);
     return NextResponse.json({ error: 'Failed to add to queue' }, { status: 500 });
   }
 }

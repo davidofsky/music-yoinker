@@ -21,6 +21,7 @@
     "tmp": "^0.2.5",
     "typescript": "^5",
     "uuid": "^13.0.0",
+    "winston": "^3.19.0",
     "ws": "^8.18.3"
   },
   "devDependencies": {
@@ -32,6 +33,7 @@
     "@types/react-dom": "^19",
     "@types/react-icons": "^2.2.7",
     "@types/tmp": "^0.2.6",
+    "@types/winston": "^2.4.4",
     "@types/ws": "^8.18.1",
     "esbuild": "^0.25.11",
     "eslint": "^9",

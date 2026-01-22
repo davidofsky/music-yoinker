@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import logger from '@/lib/logger';
 import Hifi from '@/lib/hifi';
 import Downloader from '@/lib/downloader';
 
@@ -18,7 +19,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(albumsWithStatus);
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return NextResponse.json({ error: 'Retrieve failed' }, { status: 500 });
   }
 }

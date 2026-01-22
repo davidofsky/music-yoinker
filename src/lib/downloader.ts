@@ -4,9 +4,10 @@ import axios, { AxiosError } from "axios";
 import path from 'path';
 import { Track, Album } from "./interfaces";
 import Tidal from "./tidal"
-import { broadcastQueue } from '@/lib/broadcast';
+import { broadcast, Topic } from '@/lib/broadcast';
 import { PegTheFile } from './pegger';
 import Hifi, { DownloadTrackSource } from './hifi'
+import logger from './logger';
 import Config from './config';
 
 class Downloader {
@@ -28,7 +29,7 @@ class Downloader {
       const files = fs.readdirSync(albumDir);
       return files.some(file => file.endsWith('.flac') || file.endsWith('.mp4') || file.endsWith('.mp3'));
     } catch (err) {
-      console.error('[isArtistAlbumDownloaded] Error checking if album is downloaded:', err);
+      logger.error('[isArtistAlbumDownloaded] Error checking if album is downloaded:', err);
       return false;
     }
   }
@@ -50,7 +51,7 @@ class Downloader {
     }
 
     if (!artistName) {
-      console.debug(`[IsTrackDownloaded] No artist found for track "${track.title}"`);
+      logger.debug(`[IsTrackDownloaded] No artist found for track "${track.title}"`);
       return false;
     }
 
@@ -67,20 +68,20 @@ class Downloader {
 
   public AddToQueue(tracks: Track[]) {
     this.queue.push(...tracks);
-    broadcastQueue(this.queue);
+    broadcast(JSON.stringify(this.queue), Topic.queue);
     this.download().catch(err => {
-      console.error("Queue processing error:", err);
+      logger.error("Queue processing error:", err);
     });
   }
 
   // Returns error message if exists
   public RemoveFromQueue(trackId: string): string | null {
-    console.log("removing track with id ", trackId)
+    logger.info("removing track with id ", trackId)
     const index = this.queue.findIndex(q => q.id.toString() === trackId.toString());
     if (index === -1) return `Queue does not contain track with id: ${trackId}.`;
     if (index === 0) return `Track with id ${trackId} is currently being processed.`;
     this.queue.splice(index, 1);
-    broadcastQueue(this.queue);
+    broadcast(JSON.stringify(this.queue), Topic.queue);
     return null
   }
 
@@ -101,11 +102,11 @@ class Downloader {
         try {
           await this.downloadTrack(track);
         } catch (err) {
-          console.error(`Error downloading track ${track.title}:`, err);
+          logger.error(`Error downloading track ${track.title}:`, err);
         }
 
         this.queue.shift();
-        broadcastQueue(this.queue);
+        broadcast(JSON.stringify(this.queue), Topic.queue);
       }
     } finally {
       this.processing = false;
@@ -117,7 +118,7 @@ class Downloader {
     let tmpFile: tmp.FileResult | null = null;
 
     try {
-      console.info(`Downloading track: ${track.title}`);
+      logger.info(`Downloading track: ${track.title}`);
       const downloadSource: DownloadTrackSource = await Hifi.downloadTrack(track.id);
       const tidalAlbum = Tidal.getAlbum(track.album.id);
 
@@ -151,8 +152,8 @@ class Downloader {
       else if (trackStr) prefix = `${trackStr}`;
       else if (volStr) prefix = `${volStr}`;
 
-      console.debug("Using track prefix:", prefix === '' ? '(none)' : `"${prefix}"`);
-      console.debug("Using track title separator:", `"${Config.TRACK_TITLE_SEPARATOR}"`);
+      logger.debug("Using track prefix:", prefix === '' ? '(none)' : `"${prefix}"`);
+      logger.debug("Using track title separator:", `"${Config.TRACK_TITLE_SEPARATOR}"`);
       const titleJoin = prefix ? Config.TRACK_TITLE_SEPARATOR : '';
       const fileName = `${prefix}${titleJoin}${sanitizedTitle}${version}${extension}`;
 
@@ -196,16 +197,16 @@ class Downloader {
 
       // Move file to correct destination
       const finalPath = path.join(albumDir, fileName);
-      console.info("Copying file to : " + finalPath);
+      logger.debug("Copying file to : " + finalPath);
       fs.mkdirSync(path.dirname(finalPath), { recursive: true });
       fs.copyFileSync(tempFile, finalPath);
-      console.info("Removing file: " + tempFile);
+      logger.debug("Removing file: " + tempFile);
       fs.rmSync(tempFile);
 
-      console.info(`Completed track: ${track.title}`);
+      logger.info(`Completed track: ${track.title}`);
     } catch (e) {
       if (e instanceof AxiosError) {
-        console.error(e.response)
+        logger.error(e.response)
       }
       // Clean up tmp file on error if it exists
       if (tmpFile) {
@@ -229,12 +230,12 @@ class Downloader {
         if (fs.existsSync(albumDir)) {
           const existing = fs.readdirSync(albumDir);
           if (existing.length > 0) {
-            console.info(`Cleaning existing album directory: ${albumDir}`);
+            logger.info(`Cleaning existing album directory: ${albumDir}`);
             fs.rmSync(albumDir, { recursive: true, force: true });
           }
         }
       } catch (err) {
-        console.error(`Failed to clean album directory ${albumDir}:`, err);
+        logger.error(`Failed to clean album directory ${albumDir}:`, err);
       }
       this.cleanedAlbumDirs.set(albumDir, now);
     }
