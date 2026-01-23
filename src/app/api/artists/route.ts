@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import logger from '@/lib/logger';
 import Hifi from '@/lib/hifi';
 import { getQueryParam, validateRequiredParam, handleApiCall } from '@/lib/apiUtils';
 

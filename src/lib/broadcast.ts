@@ -20,23 +20,22 @@ declare global {
 const getState = () => {
   if (!global.broadcastState) {
     global.broadcastState = {
-      clientControllers: new Array()
+      clientControllers: []
     };
   }
   return global.broadcastState
 };
 
 export function addClient(clientId: string, controller: ReadableStreamDefaultController, topic: Topic) {
-  logger.info(`[Broadcast] Adding client ${clientId}`);
+  logger.debug(`[Broadcast] Adding client ${clientId}`);
   getState().clientControllers.push({ clientId, topic, controller });
 }
 
 export function removeClient(clientId: string) {
-  logger.info(`[Broadcast] Removing client ${clientId}`);
+  logger.debug(`[Broadcast] Removing client ${clientId}`);
   const state = getState();
   state.clientControllers = state.clientControllers.filter(c => c.clientId !== clientId);
 }
-
 
 const encoder = new TextEncoder();
 /*
@@ -47,15 +46,12 @@ export async function broadcast(msg: string, topic: Topic) {
   const state = getState();
   const topicClients = state.clientControllers.filter(c => c.topic === topic);
 
-  console.info(`[Broadcast] Broadcasting to ${topicClients.length} clients on topic ${Topic[topic]}`);
-
   const message = encoder.encode(`data: ${msg}\n\n`);
   const deadClients: string[] = [];
 
   topicClients.forEach((listener) => {
     try {
       listener.controller.enqueue(message);
-      console.info(`[Broadcast] Sent to client ${listener.clientId}`);
     } catch (err) {
       console.error(`[Broadcast] Failed to send to client ${listener.clientId}:`, err);
       deadClients.push(listener.clientId);

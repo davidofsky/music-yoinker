@@ -1,5 +1,6 @@
 import * as winston from "winston";
 import config from "./config";
+import path from 'path';
 import { broadcast, Topic } from "./broadcast";
 
 export interface Log {
@@ -7,6 +8,8 @@ export interface Log {
     message: string;
     timestamp: string;
 }
+
+export const LogDirectory= path.join(config.DATA_DIRECTORY, 'logs');
 
 const { combine, timestamp, colorize, printf, json } = winston.format;
 
@@ -44,21 +47,21 @@ const logger = winston.createLogger({
     }),
     // All logs in JSON
     new winston.transports.File({
-      filename: "logs/combined.ndjson",
+      filename: `${LogDirectory}/combined.ndjson`,
       format: jsonFormat,
       maxsize: 1024 * 1024,
       maxFiles: 1
     }),
     // All logs human-readable
     new winston.transports.File({
-      filename: "logs/combined.log",
+      filename: `${LogDirectory}/combined.log`,
       format: humanFileFormat,
       maxsize: 1024 * 1024,
       maxFiles: 1
     }),
     // Only errors human-readable
     new winston.transports.File({
-      filename: "logs/error.log",
+      filename: `${LogDirectory}/error.log`,
       level: "error",
       format: humanFileFormat,
       maxsize: 1024 * 1024,
@@ -77,7 +80,7 @@ logger.on('data', (log) => {
       timestamp: new Date().toISOString()
     }),
     Topic.log
-  ).catch((err: any) => {
+  ).catch((err) => {
     console.error('Failed to broadcast log:', err);
   });
 });

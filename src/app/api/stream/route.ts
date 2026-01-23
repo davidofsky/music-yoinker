@@ -6,28 +6,26 @@ import Downloader from '@/lib/downloader';
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   const topicParam = searchParams.get('topic')?.toLowerCase();
-  
+
   const topicMap: Record<string, Topic> = {
     'queue': Topic.queue,
     'log': Topic.log
   };
-  
+
   if (!topicParam || !(topicParam in topicMap)) {
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: 'Invalid or missing topic param',
         validTopics: Object.keys(topicMap)
-      }), 
-      { 
+      }),
+      {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       }
     );
   }
-  
-  const topic = topicMap[topicParam];  const clientId = Math.random().toString(36).substring(7);
 
-  logger.info(`[SSE ${clientId}] New connection`);
+  const topic = topicMap[topicParam];  const clientId = Math.random().toString(36).substring(7);
 
   const encoder = new TextEncoder();
   let intervalId: NodeJS.Timeout;
@@ -35,8 +33,6 @@ export async function GET(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       addClient(clientId, controller, topic);
-
-      logger.info(`[SSE ${clientId}] Client registered for broadcasts`);
 
       // Send connection confirmation
       controller.enqueue(encoder.encode(': connected\n\n'));
@@ -61,7 +57,6 @@ export async function GET(req: NextRequest) {
     },
 
     cancel() {
-      logger.info(`[SSE ${clientId}] Connection closed`);
       clearInterval(intervalId);
       removeClient(clientId);
     }
