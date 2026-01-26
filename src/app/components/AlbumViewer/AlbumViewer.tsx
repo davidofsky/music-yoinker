@@ -21,7 +21,7 @@ const AlbumViewer = () => {
         },
       });
     } catch (error) {
-      console.error('Failed to download album:', error);
+      console.error(`Failed to download album: ${error}`);
       // Optionally show error to user
     } finally {
       setIsDownloading(false)

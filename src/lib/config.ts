@@ -4,6 +4,10 @@ dotenv.config({ path: new URL('../../.env', import.meta.url).pathname });
 
 class Config {
 
+  static get LOG_LEVEL(): string {
+    return process.env.LOG_LEVEL || 'info';
+  }
+
   static get TIDAL_CLIENT_ID(): string {
     return process.env.TIDAL_CLIENT_ID || '';
   }

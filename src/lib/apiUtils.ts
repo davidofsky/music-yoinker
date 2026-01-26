@@ -37,7 +37,7 @@ export async function handleApiCall<T>(
     const data = await callback();
     return { data, error: null };
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     return {
       data: null,
       error: NextResponse.json({ error: errorMessage }, { status: 500 }),

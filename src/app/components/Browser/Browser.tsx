@@ -194,7 +194,6 @@ const Browser = () => {
           />
         </div>
       </div>
-
     </div>
   )
 }

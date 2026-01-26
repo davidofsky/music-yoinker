@@ -18,7 +18,7 @@ export default class Tidal {
   private static tokenExpiry: number = 0;
 
   private static async getAuthToken() {
-    console.info("Retrieving authentication token from Tidal");
+    logger.info("Retrieving authentication token from Tidal");
 
     const credentials = btoa(`${Config.TIDAL_CLIENT_ID}:${Config.TIDAL_CLIENT_SECRET}`);
 
@@ -39,11 +39,11 @@ export default class Tidal {
       const decoded = JSON.parse(atob(payload));
       this.tokenExpiry = (decoded.exp * 1000); // <-- x 1000 to convert to MS
     } catch (e) {
-      console.error("Failed to get expiration date of tidal JWT token: ", e)
+      logger.error("Failed to get expiration date of tidal JWT token: ", e)
       this.tokenExpiry = Date.now();
     }
 
-    console.error("Retrieved auth token from Tidal.")
+    logger.info("Retrieved auth token from Tidal.")
   }
 
   // Returns false if authToken doesnt exist, or if the token expires within 10 seconds
@@ -85,12 +85,12 @@ export default class Tidal {
       return tidalAlbum;
     } catch (e) {
       if (axios.isAxiosError(e) && e.response?.status === 401 && firstAttempt) {
-        console.warn(`401 Unauthorized for album ${albumId}.`);
+        logger.warn(`401 Unauthorized for album ${albumId}.`);
         await this.getAuthToken();
         return this.getAlbum(albumId, false);
       }
 
-      console.error(`Error fetching album from Tidal with ID ${albumId}:`, e);
+      logger.error(`Error fetching album from Tidal with ID ${albumId}:`, e);
       throw e;
     }
   }
