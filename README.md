@@ -41,7 +41,7 @@ Copy the `example.env` file to `.env` and fill in the required environment varia
 - `TRACK_DISC_SEPARATOR`: (optional) Separator used between disc number and track number in filenames. Default is `.`. When you want to use special characters or spaces, wrap the value in quotes (e.g., `" - "`).
 - `TRACK_TITLE_SEPARATOR`: (optional) Separator used between track number and track title in filenames. Default is ` `. When you want to use special characters or spaces, wrap the value in quotes (e.g., `" - "`).
 - `TRACK_PAD_LENGTH`: (optional) Number of digits to pad track numbers to. Default is `1`.
-- `LOG_LEVEL`: (optional) Controls which log messages are shown in the console. Default is `info`.
+- `LOG_LEVEL`: (optional) Controls which log messages are shown in the console. Default is `info`. <br> Possible values are `error`, `warn`, `info`, `http`, `verbose`, `debug`, `silly`.
 
 ## Migrator
 A migration script is built to help migrate existing or old downloads to the new format used by Yoinker. You can run it with:
