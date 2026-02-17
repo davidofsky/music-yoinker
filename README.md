@@ -3,6 +3,7 @@
 Yoinker is a self-hosted tool for downloading [TIDAL API](https://tidal-music.github.io/tidal-api-reference/) audio from **TIDAL** using the [HIFI API](https://github.com/uimaxbai/hifi-api).
 It is intended to be used alongside self-hosted music servers such as **Navidrome**.
 
+
 ## Overview
 
 - Audio downloads are handled via **hifi-api**
@@ -10,6 +11,7 @@ It is intended to be used alongside self-hosted music servers such as **Navidrom
 - Downloads are processed through a queue
 - **ffmpeg** is used to embed metadata and cover art into the final FLAC files
 - The UI is designed to be **mobile-friendly** and straightforward
+- Genres are sadly not available through the **hifi-api**, so these are retrieved from [MusicBrainz](https://musicbrainz.org)..
 
 ## Tech Stack
 - **Next.js**
