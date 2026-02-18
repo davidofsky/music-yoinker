@@ -20,11 +20,11 @@ export const PegTheFile = async (
     });
     fs.writeFileSync(coverPath, response.data);
 
-    console.warn('retrieving extension from ', filePath)
+    logger.debug(`retrieving extension from ${filePath}`)
     const extension:string = filePath.split(".").pop()||".flac";
-    console.warn('Retrieved extension, ', extension)
+    logger.debug(`Retrieved extension,  ${extension}`)
     tempFile = path.join(tmpdir(), `track-${Date.now()}.${extension}`);
-    console.info(filePath, metadata, tempFile)
+    logger.info(filePath, metadata, tempFile)
 
     const metadataArgs = Object.entries(metadata)
       .map(([k, v]) => {
@@ -45,7 +45,7 @@ export const PegTheFile = async (
     await new Promise<void>((resolve, reject) => {
       exec(cmd, { maxBuffer: 10 * 1024 * 1024 }, (error, _stdout, stderr) => {
         if (error) {
-          console.error('FFmpeg stderr:', stderr);
+          logger.error(`FFmpeg stderr: ${stderr}`);
           return reject(error);
         }
         resolve();
@@ -60,11 +60,11 @@ export const PegTheFile = async (
     for (const file of filesToClean) {
       try {
         if (file && fs.existsSync(file)) {
-          console.info("Removing file: " + file)
+          logger.debug("Removing file: " + file)
           fs.rmSync(file)
         }
       } catch (err) {
-        console.error(`Failed to clean up ${file}:`, err);
+        logger.error(`Failed to clean up ${file}:`, err);
       }
     }
   }

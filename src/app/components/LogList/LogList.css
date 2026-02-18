@@ -1,0 +1,98 @@
+.error {
+    color: #fca5a5;
+    background-color: #450a0a;
+    border-color: #7f1d1d;
+}
+
+.warn {
+    color: #fde047;
+    background-color: #422006;
+    border-color: #713f12;
+}
+
+.info {
+    color: #93c5fd;
+    background-color: #1e3a8a;
+    border-color: #1e40af;
+}
+
+.debug {
+    color: #d1d5db;
+    background-color: #1f2937;
+    border-color: #374151;
+}
+
+
+.LogList {
+    overflow: scroll;
+    max-width: 50em;
+    border-bottom: 2px solid grey;
+    border-top: 2px solid grey;
+}
+
+.LogItem {
+    padding: .5em;
+    margin: .2em;
+    border: 2px solid;
+    border-radius: 1em;
+    display: flex;
+    transform: scale(0.9);
+    opacity: 0;
+    animation: LogItem 0.6s ease-out forwards;
+}
+
+@keyframes LogItem {
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.LogIcon {
+    padding: .5em;
+}
+
+
+.LogHeader {
+    display: flex;
+    align-items: center;
+    gap: .5em;
+}
+
+.LogLevel {
+    font-weight: 750;
+}
+
+.LogTime {
+    font-size: 80%;
+    opacity: 80%;
+}
+
+button {
+  display: flex;
+  padding: .5em;
+  gap: .5em;
+  border-radius: .5em;
+  background: black;
+  border: 2px solid #333;
+  cursor: pointer;
+  float: right;
+  align-items: center;
+}
+
+.StickyButton {
+  transform: scale(.95);
+  transition: 
+    background-color 0.25s ease,
+    opacity 0.25s ease,
+    transform 0.15s ease;
+}
+.StickyButton:hover {
+  transform: scale(1);
+}
+.StickyButton.Enabled {
+  background-color: #2e7758;
+}
+.StickyButton.Disabled {
+  background-color: #3e3e3e;
+}
