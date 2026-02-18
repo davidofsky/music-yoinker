@@ -1,10 +1,12 @@
 import axios from "axios";
 import Config from "./config";
+import MusicBrainz from './musicbrainz';
 
 type TidalAlbum = {
   id: string,
-  date: string
+  releaseDate: string
   albumArtist: string
+  genres: string[]
 }
 
 export default class Tidal {
@@ -71,10 +73,17 @@ export default class Tidal {
         }
       });
 
+      const albumTitle = result.data.data.attributes.title;
+      const albumArtist = result.data.included.find((i:any) => i.type ="artists").attributes.name;
+      const releaseDate = result.data.data.attributes.releaseDate; //example: 2025-06-13
+      const genres = await MusicBrainz.getGenres(albumTitle, albumArtist, releaseDate.split('-')[0]);
+      logger.debug(`Found genres: ${genres}`)
+
       const tidalAlbum: TidalAlbum = {
         id: albumId,
-        date: result.data.data.attributes.releaseDate,
-        albumArtist: result.data.included.find((i:any) => i.type ="artists").attributes.name
+        albumArtist,
+        releaseDate: releaseDate,
+        genres
       }
 
       this.tidalAlbums.push(tidalAlbum);

@@ -7,3 +7,16 @@ export interface DisplayItem {
   Tracks: ITrack[]
   ReleaseDate?: string
 }
+
+// Start MusicBrainz interfaces
+export interface MbReleaseGroup {
+  id: string;
+  title: string;
+  tags?: MbTag[];
+}
+
+export interface MbTag {
+  name: string;
+  count?: number;
+}
+// End MusicBrainz interfaces
