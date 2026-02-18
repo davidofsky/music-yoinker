@@ -3,7 +3,7 @@ services:
     container_name: music-yoinker
     build: .
     ports:
-      - 8080:3000
+      - 4534:3000
     restart: unless-stopped
     env_file:
       - .env
