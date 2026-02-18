@@ -16,7 +16,6 @@ export default function Home() {
         <OpenArtistCtx.Provider value={useState<IArtist|null>(null)}>
           <OpenQueueCtx.Provider value={useState<boolean>(false)}>
             <LoadingCtx.Provider value={useState<boolean>(false)}>
-
               <Loading />
               <AlbumViewer />
               <ArtistViewer />

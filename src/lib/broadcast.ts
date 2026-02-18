@@ -1,6 +1,15 @@
-import { ITrack } from '@/app/interfaces/track.interface';
+import logger from './logger'
 
-type ClientControllerList = Map<string, ReadableStreamDefaultController>
+export enum Topic {
+  queue,
+  log
+}
+
+type ClientControllerList = Array<{
+  topic: Topic,
+  clientId: string,
+  controller: ReadableStreamDefaultController
+}>
 
 declare global {
   var broadcastState: {
@@ -11,38 +20,43 @@ declare global {
 const getState = () => {
   if (!global.broadcastState) {
     global.broadcastState = {
-      clientControllers: new Map()
+      clientControllers: []
     };
   }
   return global.broadcastState
 };
 
-export function addClient(clientId: string, controller: ReadableStreamDefaultController) {
-  console.info(`[Broadcast] Adding client ${clientId}`);
-  getState().clientControllers.set(clientId, controller);
+export function addClient(clientId: string, controller: ReadableStreamDefaultController, topic: Topic) {
+  logger.debug(`[Broadcast] Adding client ${clientId}`);
+  getState().clientControllers.push({ clientId, topic, controller });
 }
 
 export function removeClient(clientId: string) {
-  console.info(`[Broadcast] Removing client ${clientId}`);
-  getState().clientControllers.delete(clientId);
+  logger.debug(`[Broadcast] Removing client ${clientId}`);
+  const state = getState();
+  state.clientControllers = state.clientControllers.filter(c => c.clientId !== clientId);
 }
 
-export async function broadcastQueue(queue: ITrack[]) {
+const encoder = new TextEncoder();
+/*
+ * Do NOT use the logger in the broadcast function,
+ * because the logger uses this function itself which would create an infinite loop
+ */
+export async function broadcast(msg: string, topic: Topic) {
   const state = getState();
-  console.info(`[Broadcast] Broadcasting to ${state.clientControllers.size} clients`);
+  const topicClients = state.clientControllers.filter(c => c.topic === topic);
 
-  const encoder = new TextEncoder();
-  const message = encoder.encode(`data: ${JSON.stringify(queue)}\n\n`);
+  const message = encoder.encode(`data: ${msg}\n\n`);
   const deadClients: string[] = [];
 
-  state.clientControllers.forEach((controller, clientId) => {
+  topicClients.forEach((listener) => {
     try {
-      controller.enqueue(message);
-      console.info(`[Broadcast] Sent to client ${clientId}`);
+      listener.controller.enqueue(message);
     } catch (err) {
-      console.error(`[Broadcast] Failed to send to client ${clientId}:`, err);
-      deadClients.push(clientId);
+      console.error(`[Broadcast] Failed to send to client ${listener.clientId}:`, err);
+      deadClients.push(listener.clientId);
     }
   });
+
   deadClients.forEach(clientId => removeClient(clientId));
 }

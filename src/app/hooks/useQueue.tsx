@@ -5,14 +5,13 @@ export function useQueue() : ITrack[] {
   const [queue, setQueue] = useState<ITrack[]>([]);
 
   useEffect(() => {
-    const es = new EventSource('/api/queue/stream');
+    const es = new EventSource('/api/stream?topic=queue');
 
     es.onopen = () => {
       console.info("Connected to queue stream")
     }
 
     es.onmessage = (e) => {
-      console.log(e)
       if (!e.data) return;
       const data: typeof queue = JSON.parse(e.data);
       console.log(data)

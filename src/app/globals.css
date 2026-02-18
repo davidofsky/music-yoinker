@@ -90,10 +90,20 @@ button {
   color: #fff;
 }
 
+.Title {
+  font-size: 200%;
+  padding: 1em;
+}
+
+.SmallTitle {
+  font-size: 180%;
+  padding: .5em;
+}
 
 .ModalTitle { 
   font-size: 1.5em;
 }
+
 .ModalSubtitle { 
   font-size: 1em;
   color: #aaa;
