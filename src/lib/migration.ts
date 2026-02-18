@@ -5,6 +5,7 @@ import { promisify } from 'util';
 import logger from "./logger";
 import Version from './version';
 import Config from './config';
+import MusicBrainz from './musicbrainz'
 
 const execAsync = promisify(exec);
 
@@ -223,6 +224,7 @@ declare global {
 
 if (!global.migrationService) {
   global.migrationService = new MigrationService();
+
   global.migrationService.registerRule({
     fromVersion: '0.0.0',
     toVersion: '1.0.0',
@@ -230,6 +232,27 @@ if (!global.migrationService) {
     shouldMigrate: (metadata) => !metadata.appversion && !metadata.appVersion,
     migrate: async () => { }
   });
+
+  global.migrationService.registerRule({
+  fromVersion: '1.0.0',
+  toVersion: '1.1.0',
+  name: 'Add genres from MusicBrainz',
+  shouldMigrate: (metadata) => !metadata.genre,
+  migrate: async (filePath, metadata) => {
+    const artist = metadata.artist || metadata.albumartist;
+    const album = metadata.album;
+    const date = metadata.date;
+    if (!artist || !album || !date) return;
+
+    const year = date.split('-')[0];
+    const genres = await MusicBrainz.getGenres(album, artist, year);
+    if (genres.length === 0) return;
+
+    await migrationService['updateMetadata'](filePath, {
+      genre: genres.join(', ')
+    });
+  }
+});
 }
 
 export default global.migrationService;
