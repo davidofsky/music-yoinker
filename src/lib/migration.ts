@@ -141,7 +141,11 @@ class MigrationService {
 
   private shouldApplyRule(rule: MigrationRule, currentVersion: string | undefined): boolean {
     if (!currentVersion) return true;
-    return Version.compareVersions(currentVersion, rule.toVersion) < 0;
+
+    const afterOrEqualToFrom = Version.compareVersions(currentVersion, rule.fromVersion) >= 0;
+    const beforeOrEqualToTo = Version.compareVersions(currentVersion, rule.toVersion) <= 0;
+
+    return afterOrEqualToFrom && beforeOrEqualToTo;
   }
 
   public async migrateDirectory(dirPath: string): Promise<number> {

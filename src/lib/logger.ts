@@ -13,9 +13,31 @@ export const LogDirectory= path.join(config.DATA_DIRECTORY, 'logs');
 
 const { combine, timestamp, colorize, printf, json } = winston.format;
 
+const safeStringify = (value: unknown): string => {
+  const seen = new WeakSet<object>();
+  return JSON.stringify(value, (_key, currentValue) => {
+    if (currentValue instanceof Error) {
+      return {
+        name: currentValue.name,
+        message: currentValue.message,
+        stack: currentValue.stack,
+      };
+    }
+
+    if (typeof currentValue === 'object' && currentValue !== null) {
+      if (seen.has(currentValue)) {
+        return '[Circular]';
+      }
+      seen.add(currentValue);
+    }
+
+    return currentValue;
+  });
+};
+
 // Human-readable format
 const humanFormat = printf(({ timestamp, level, message, ...meta }) => {
-  const metaString = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : "";
+  const metaString = Object.keys(meta).length ? ` ${safeStringify(meta)}` : "";
   return `${timestamp} [${level}]: ${message}${metaString}`;
 });
 
