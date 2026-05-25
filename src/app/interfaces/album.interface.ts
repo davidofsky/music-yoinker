@@ -32,6 +32,7 @@ export interface IAlbum extends ISimpleAlbum {
   /** Custom properties */
   artwork: string;
   isDownloaded: boolean;
+  source?: 'tidal' | 'qobuz';
 }
 
 export interface ISimpleAlbum {

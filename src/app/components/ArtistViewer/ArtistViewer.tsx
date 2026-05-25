@@ -24,7 +24,7 @@ const ArtistViewer = () => {
   const getArtist = async () => {
     setLoading(true)
     const result = await axios.get("/api/artist", {
-      params: { id: openArtist?.id }
+      params: { id: openArtist?.id, source: openArtist?.source }
     })
     setLoading(false)
     setAlbums(result.data);

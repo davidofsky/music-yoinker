@@ -12,7 +12,7 @@ const Loading = () => {
             className="LoadingModal"
             initial={{ scale: 0 }} animate={{ scale: 1 }}
           >
-            Retrieving data from Tidal...
+            Retrieving data...
           </motion.div>
         </div>
       }</>

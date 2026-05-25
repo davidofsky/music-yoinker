@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import Hifi from '@/lib/hifi';
+import musicRepository from '@/lib/music.repository';
 import { getQueryParam, validateRequiredParam, handleApiCall } from '@/lib/apiUtils';
 
 export async function GET(req: Request) {
@@ -8,7 +8,7 @@ export async function GET(req: Request) {
   if (validationError) return validationError;
 
   const { data, error } = await handleApiCall(
-    () => Hifi.searchArtist(query!),
+    () => musicRepository.searchArtist(query!),
     'Search failed'
   );
 

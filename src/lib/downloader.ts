@@ -5,7 +5,8 @@ import path from 'path';
 import Tidal from "./tidal"
 import { broadcast, Topic } from '@/lib/broadcast';
 import { PegTheFile } from './pegger';
-import Hifi, { DownloadTrackSource } from './hifi'
+import { DownloadTrackSource } from './hifi'
+import musicRepository from './music.repository'
 import logger from './logger';
 import Config from './config';
 import Version from './version';
@@ -105,18 +106,27 @@ class Downloader {
 
     try {
       logger.info(`Downloading track: ${track.title}`);
-      const downloadSource: DownloadTrackSource = await Hifi.downloadTrack(track.id.toString());
-      const tidalAlbum = Tidal.getAlbum(track.album.id.toString());
+      const downloadSource: DownloadTrackSource = await musicRepository.downloadTrack(track.id.toString(), track.source);
+      const tidalAlbum = track.source === 'qobuz'
+        ? Promise.resolve({ albumArtist: track.artist.name, releaseDate: track.releaseDate || '', genres: [] as string[] })
+        : Tidal.getAlbum(track.album.id.toString());
 
       const urls = downloadSource.type === 'dash' ? [downloadSource.initUrl, ...downloadSource.segmentUrls] : [downloadSource.url];
-      const defaultExtension = downloadSource.type === 'dash' ? downloadSource.extension : '.flac';
+      const defaultExtension = downloadSource.extension ?? '.flac';
+      const fetchHeaders = downloadSource.fetchHeaders ?? {};
+
+      logger.info(`[Downloader] Download source type: ${downloadSource.type}`);
+      logger.info(`[Downloader] Fetching URLs: ${urls.join(', ')}`);
 
       const buffers: Buffer[] = [];
       let contentType: string | undefined;
 
       for (const url of urls) {
-        const response = await axios.get(url, { responseType: 'arraybuffer', timeout: 60000 });
-        if (!contentType) contentType = response.headers['content-type'];
+        const response = await axios.get(url, { responseType: 'arraybuffer', timeout: 60000, headers: fetchHeaders });
+        if (!contentType) {
+          const ct = response.headers['content-type'];
+          contentType = typeof ct === 'string' ? ct : undefined;
+        }
         buffers.push(Buffer.from(response.data));
       }
 
@@ -179,7 +189,8 @@ class Downloader {
         keyScale: track.keyScale || "",
         explicit: track.explicit?.toString() || "",
         track: track.trackNumber?.toString() || "",
-        appVersion: Version.APP_VERSION
+        appVersion: Version.APP_VERSION,
+        source: track.source === 'qobuz' ? 'Qobuz' : 'Tidal'
       }, track.artwork);
 
       // Move file to correct destination

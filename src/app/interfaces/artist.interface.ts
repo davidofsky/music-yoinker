@@ -12,6 +12,7 @@ export interface IArtist extends ISimpleArtist {
   };
   userId: string | null;
   spotlighted: boolean;
+  source?: 'tidal' | 'qobuz';
 }
 
 export interface ISimpleArtist {

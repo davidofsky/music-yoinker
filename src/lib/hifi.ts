@@ -6,8 +6,8 @@ import { IAlbum } from '@/app/interfaces/album.interface';
 import { IArtist } from '@/app/interfaces/artist.interface';
 
 export type DownloadTrackSource =
-  | { type: 'direct'; url: string; mimeType?: string | null }
-  | { type: 'dash'; mimeType?: string | null; initUrl: string; segmentUrls: string[]; extension: string };
+  | { type: 'direct'; url: string; extension?: string; mimeType?: string | null; fetchHeaders?: Record<string, string> }
+  | { type: 'dash'; mimeType?: string | null; initUrl: string; segmentUrls: string[]; extension: string; fetchHeaders?: Record<string, string> };
 
 class Hifi {
   private static readonly DEFAULT_HEADERS = { accept: 'application/vnd.api+json' };
@@ -140,7 +140,7 @@ class Hifi {
       } else if (manifestMimeType === 'application/vnd.tidal.bts') {
         const parsed = JSON.parse(decodedManifest);
         const url = parsed?.urls?.[0];
-        return { type: 'direct', url, mimeType: manifestMimeType };
+        return { type: 'direct', url, extension: '.flac', mimeType: manifestMimeType };
       } else if (manifestMimeType === 'application/dash+xml') {
         return this.parseDashManifest(decodedManifest, manifestMimeType);
       } else {

@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
-import Hifi from '@/lib/hifi';
+import musicRepository from '@/lib/music.repository';
 import { getQueryParam, validateRequiredParam, handleApiCall } from '@/lib/apiUtils';
 
 export async function GET(req: Request) {
   const id = getQueryParam(req, 'id');
+  const source = getQueryParam(req, 'source');
   const validationError = validateRequiredParam(id, 'id');
   if (validationError) return validationError;
 
   const { data, error } = await handleApiCall(
-    () => Hifi.searchAlbumTracks(id!),
+    () => musicRepository.searchAlbumTracks(id!, source),
     'Retrieve failed'
   );
 

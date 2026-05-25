@@ -11,14 +11,17 @@ export const PegTheFile = async (
 ): Promise<string> => {
   const coverPath = path.join(tmpdir(), `cover-${Date.now()}.jpg`);
   let tempFile: string | null = null;
+  let hasCover = false;
 
   try {
-    // Download cover image
-    const response = await axios.get(coverUrl, {
-      responseType: 'arraybuffer',
-      timeout: 30000
-    });
-    fs.writeFileSync(coverPath, response.data);
+    if (coverUrl) {
+      const response = await axios.get(coverUrl, {
+        responseType: 'arraybuffer',
+        timeout: 30000
+      });
+      fs.writeFileSync(coverPath, response.data);
+      hasCover = true;
+    }
 
     logger.debug(`retrieving extension from ${filePath}`)
     const extension:string = filePath.split(".").pop()||".flac";
@@ -36,10 +39,14 @@ export const PegTheFile = async (
     const isMP4 = ['.mp4', '.m4a', '.mov'].includes(`.${extension}`.toLowerCase());
     const movflags = isMP4 ? '-movflags use_metadata_tags' : '';
 
-    const cmd = `ffmpeg -y -i "${filePath}" -i "${coverPath}" ` +
+    const cmd = hasCover
+      ? `ffmpeg -y -i "${filePath}" -i "${coverPath}" ` +
           `-map 0:a -map 1:0 ` +
           `-c:a copy -c:v copy ` +
           `-disposition:v:0 attached_pic ` +
+          `${metadataArgs} ${movflags} "${tempFile}"`
+      : `ffmpeg -y -i "${filePath}" ` +
+          `-c:a copy ` +
           `${metadataArgs} ${movflags} "${tempFile}"`;
 
     await new Promise<void>((resolve, reject) => {
@@ -55,7 +62,7 @@ export const PegTheFile = async (
     return tempFile;
 
   } finally {
-    const filesToClean = [filePath, filePath, coverPath];
+    const filesToClean = [filePath, coverPath];
 
     for (const file of filesToClean) {
       try {
