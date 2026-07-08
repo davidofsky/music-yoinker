@@ -109,7 +109,10 @@ class Downloader {
       const downloadSource: DownloadTrackSource = await musicRepository.downloadTrack(track.id.toString(), track.source);
       const tidalAlbum = track.source === 'qobuz'
         ? Promise.resolve({ albumArtist: track.artist.name, releaseDate: track.releaseDate || '', genres: [] as string[] })
-        : Tidal.getAlbum(track.album.id.toString());
+        : Tidal.getAlbum(track.album.id.toString()).catch(err => {
+          logger.error(`[Downloader] Failed to fetch Tidal album metadata for genre tagging, continuing without genres:`, err);
+          return { albumArtist: track.artist.name, releaseDate: track.releaseDate || '', genres: [] as string[] };
+        });
 
       const urls = downloadSource.type === 'dash' ? [downloadSource.initUrl, ...downloadSource.segmentUrls] : [downloadSource.url];
       const defaultExtension = downloadSource.extension ?? '.flac';
@@ -131,7 +134,7 @@ class Downloader {
       }
 
       const payload = Buffer.concat(buffers);
-      const extension = this.resolveExtensionFromContentType(contentType, defaultExtension);
+      const extension = downloadSource.extension ?? this.resolveExtensionFromContentType(contentType, defaultExtension);
 
       tmpFile = tmp.fileSync({ postfix: extension });
       const filePath = tmpFile.name;

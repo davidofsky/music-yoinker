@@ -178,9 +178,9 @@ class Hifi {
 
     const templateExtMatch = mediaTemplate.match(/\.([a-z0-9]+)(?:\?|$)/i);
     const codecs = manifestXml.match(/codecs="([^"]+)"/i)?.[1]?.toLowerCase() ?? '';
-    const extension = templateExtMatch
-      ? `.${templateExtMatch[1]}`
-      : (codecs.includes('flac') ? '.flac' : '.mp4');
+    const extension = codecs.includes('flac')
+      ? '.flac'
+      : (templateExtMatch ? `.${templateExtMatch[1]}` : '.mp4');
 
     return {
       type: 'dash',
