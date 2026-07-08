@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import Downloader from '@/lib/downloader';
-import Hifi from '@/lib/hifi';
+import musicRepository from '@/lib/music.repository';
 import { getQueryParam, validateRequiredParam, addDownloadStatus, handleApiCall } from '@/lib/apiUtils';
 
 export async function GET(req: Request) {
@@ -10,7 +10,7 @@ export async function GET(req: Request) {
 
   const { data, error } = await handleApiCall(
     async () => {
-      const result = await Hifi.searchAlbum(query!);
+      const result = await musicRepository.searchAlbum(query!);
       return addDownloadStatus(result, (album) => Downloader.IsAlbumDownloaded(album));
     },
     'Search failed'

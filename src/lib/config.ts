@@ -20,6 +20,19 @@ class Config {
     return (process.env.HIFI_SOURCES || '').split(',').map(s => s.trim()).filter(Boolean);
   }
 
+  static get QOBUZ_DL_SOURCES(): string[] {
+    return (process.env.QOBUZ_DL_SOURCES || '').split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  static get QOBUZ_DL_COOKIES(): string {
+    return process.env.QOBUZ_DL_COOKIES || '';
+  }
+
+  static get QOBUZ_DL_QUALITY(): string {
+    const q = process.env.QOBUZ_DL_QUALITY || '27';
+    return ['27', '7', '6', '5'].includes(q) ? q : '27';
+  }
+
   static get MUSIC_DIRECTORY(): string {
     return process.env.MUSIC_DIRECTORY || '';
   }

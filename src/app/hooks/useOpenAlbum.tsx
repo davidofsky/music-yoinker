@@ -11,7 +11,7 @@ export const useOpenAlbum = () => {
     setLoading(true)
     try {
       const result = await axios.get("/api/album", {
-        params: { id: album.id }
+        params: { id: album.id, source: album.source }
       })
       setOpenAlbum({
         Title: album.title,

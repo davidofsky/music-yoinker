@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
 				protocol: 'https',
 				hostname: 'resources.tidal.com',
 			},
+			{
+				protocol: 'https',
+				hostname: 'static.qobuz.com',
+			},
 		],
 	},
 };

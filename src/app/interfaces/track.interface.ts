@@ -43,4 +43,6 @@ export interface ITrack {
   /** Custom properties */
   artwork: string;
   isDownloaded: boolean;
+  source?: 'tidal' | 'qobuz';
+  releaseDate?: string;
 }
