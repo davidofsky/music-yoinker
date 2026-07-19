@@ -61,6 +61,17 @@ The migrator will scan the specified directory (and its subdirectories) for exis
 
 To check whether or not a file needs to be migrated we add a custom tag `AppVersion` to each file. If the file's `AppVersion` is lower than the current app version, it will be migrated. The migrator will be ran automatically on app start to ensure all files are up to date.
 
+## Metadata Refresh
+If you need to rebuild tags and embedded artwork for an existing library without renaming files, use the metadata refresh script:
+
+```bash
+npm run refresh-metadata -- --dir "/path/to/your/music"
+```
+
+By default it scans `MUSIC_DIRECTORY` from `.env`. Add `--dry-run` first if you want to review what would be refreshed before rewriting files.
+
+This is especially useful if you have dabbled around with Lidarr or other tools that may have written incorrect metadata to your files. The refresh script will attempt to fix any issues and ensure your library is consistent.
+
 ## Disclaimer
 
 This project is intended for **personal and educational use only**.
