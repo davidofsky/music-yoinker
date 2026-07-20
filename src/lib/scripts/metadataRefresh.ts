@@ -1,8 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import tmp from 'tmp';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import logger from '../logger';
 import musicRepository from '../music.repository';
 import Tidal from '../tidal';
@@ -10,8 +8,7 @@ import { PegTheFile } from '../pegger';
 import Version from '../version';
 import { IAlbum } from '../../app/interfaces/album.interface';
 import { ITrack } from '../../app/interfaces/track.interface';
-
-const execAsync = promisify(exec);
+import { addMetadata } from './media-commands';
 
 const AUDIO_EXTENSIONS = new Set(['.flac', '.mp3', '.mp4', '.m4a', '.mov']);
 
@@ -57,19 +54,7 @@ interface ResolvedAlbumMetadata {
 
 class MetadataRefreshService {
   private async extractMetadata(filePath: string): Promise<FileMetadata> {
-    const { stdout } = await execAsync(
-      `ffprobe -v quiet -print_format json -show_format "${filePath}"`
-    );
-
-    const data = JSON.parse(stdout) as { format?: { tags?: Record<string, string> } };
-    const tags = data.format?.tags || {};
-    const metadata: FileMetadata = {};
-
-    for (const [key, value] of Object.entries(tags)) {
-      metadata[key.toLowerCase()] = value;
-    }
-
-    return metadata;
+    return addMetadata(filePath);
   }
 
   private async scanAudioFiles(dirPath: string): Promise<string[]> {
