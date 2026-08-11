@@ -1,11 +1,16 @@
-import dotenv from 'dotenv';
-import MigrationService from '../src/lib/migration';
+import MigrationService from '../src/lib/scripts/migration';
 import PackageJson from '../package.json';
 import Config from '../src/lib/config';
+import {
+  formatElapsedSeconds,
+  getScriptArgs,
+  hasFlag,
+  printScriptFooter,
+  printScriptHeader,
+  resolveTargetDirectory,
+} from './script-utils';
 
-dotenv.config({ path: new URL('../.env', import.meta.url).pathname });
-
-const args = process.argv.slice(2);
+const args = getScriptArgs();
 const version = PackageJson.version;
 
 function showHelp() {
@@ -26,18 +31,15 @@ function showHelp() {
 }
 
 async function main() {
-  if (args.includes('--help') || args.includes('-h')) {
+  if (hasFlag(args, '--help') || hasFlag(args, '-h')) {
     showHelp();
     process.exit(0);
   }
 
-  const customDir = args.includes('--dir') ? args[args.indexOf('--dir') + 1] : Config.MUSIC_DIRECTORY;
-  const forceRun = args.includes('--force');
+  const customDir = resolveTargetDirectory(args, Config.MUSIC_DIRECTORY);
+  const forceRun = hasFlag(args, '--force');
 
-  console.log('========================================');
-  console.log(`Music Yoinker Migration Tool v${version}`);
-  console.log(`Target Directory: ${customDir}`);
-  console.log('========================================\n');
+  printScriptHeader('Music Yoinker Migration Tool', version, customDir);
 
   try {
     if (!forceRun && !MigrationService.needsMigration(version)) {
@@ -47,15 +49,14 @@ async function main() {
 
     const startTime = Date.now();
     const count = await MigrationService.migrateDirectory(customDir);
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+    const elapsed = formatElapsedSeconds(startTime);
 
     MigrationService.saveLastMigratedVersion(version);
 
-    console.log('\n=========================');
-    console.log(`   Migration Complete!`);
-    console.log(`   Files migrated: ${count}`);
-    console.log(`   Time elapsed: ${elapsed}s`);
-    console.log('==========================\n');
+    printScriptFooter('Migration Complete!', [
+      `   Files migrated: ${count}`,
+      `   Time elapsed: ${elapsed}s`,
+    ]);
 
     process.exit(0);
   } catch (error) {

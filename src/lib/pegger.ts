@@ -1,8 +1,8 @@
 import path from 'path';
 import fs from 'fs';
-import { exec } from 'child_process';
 import axios from 'axios';
 import { tmpdir } from 'os';
+import { copyAudioWithMetadata } from './scripts/media-commands';
 
 export const PegTheFile = async (
   filePath: string,
@@ -29,34 +29,11 @@ export const PegTheFile = async (
     tempFile = path.join(tmpdir(), `track-${Date.now()}.${extension}`);
     logger.info(filePath, metadata, tempFile)
 
-    const metadataArgs = Object.entries(metadata)
-      .map(([k, v]) => {
-        const escaped = String(v).replace(/"/g, '\\"');
-        return `-metadata ${k}="${escaped}"`;
-      })
-      .join(' ');
-
-    const isMP4 = ['.mp4', '.m4a', '.mov'].includes(`.${extension}`.toLowerCase());
-    const movflags = isMP4 ? '-movflags use_metadata_tags' : '';
-
-    const cmd = hasCover
-      ? `ffmpeg -y -i "${filePath}" -i "${coverPath}" ` +
-          `-map 0:a -map 1:0 ` +
-          `-c:a copy -c:v copy ` +
-          `-disposition:v:0 attached_pic ` +
-          `${metadataArgs} ${movflags} "${tempFile}"`
-      : `ffmpeg -y -i "${filePath}" ` +
-          `-c:a copy ` +
-          `${metadataArgs} ${movflags} "${tempFile}"`;
-
-    await new Promise<void>((resolve, reject) => {
-      exec(cmd, { maxBuffer: 10 * 1024 * 1024 }, (error, _stdout, stderr) => {
-        if (error) {
-          logger.error(`FFmpeg stderr: ${stderr}`);
-          return reject(error);
-        }
-        resolve();
-      });
+    await copyAudioWithMetadata({
+      inputPath: filePath,
+      outputPath: tempFile,
+      metadata,
+      coverPath: hasCover ? coverPath : undefined,
     });
 
     return tempFile;

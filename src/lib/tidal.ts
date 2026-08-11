@@ -48,9 +48,13 @@ export default class Tidal {
     logger.info("Retrieved auth token from Tidal.")
   }
 
-  // Returns false if authToken doesnt exist, or if the token expires within 10 seconds
+  /**
+   * The 10 seconds buffer is to avoid using a token that is about to expire while making a request.
+   * @returns true if the token is expired or will expire in the next 10 seconds, false otherwise
+   */
   private static isTokenExpired(): boolean {
-    return !this.authToken || Date.now() + 10000 >= this.tokenExpiry;
+    const tenSecondsInMs = 10000;
+    return !this.authToken || Date.now() + tenSecondsInMs >= this.tokenExpiry;
   }
 
   public static async getAlbum(albumId: string, firstAttempt = true) : Promise<TidalAlbum> {

@@ -1,13 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import logger from "./logger";
-import Version from './version';
-import Config from './config';
-import MusicBrainz from './musicbrainz'
-
-const execAsync = promisify(exec);
+import logger from "../logger";
+import Version from '../version';
+import Config from '../config';
+import MusicBrainz from '../musicbrainz'
+import { copyAudioWithMetadata, addMetadata } from './media-commands';
 
 const VERSION_FILE = path.join(Config.DATA_DIRECTORY, '.last-migration-version');
 
@@ -39,19 +36,7 @@ class MigrationService {
 
   private async extractMetadata(filePath: string): Promise<MigrationMetadata> {
     try {
-      const { stdout } = await execAsync(
-        `ffprobe -v quiet -print_format json -show_format "${filePath}"`
-      );
-
-      const data = JSON.parse(stdout);
-      const tags = data.format?.tags || {};
-
-      const metadata: MigrationMetadata = {};
-      for (const [key, value] of Object.entries(tags)) {
-        metadata[key.toLowerCase()] = value as string;
-      }
-
-      return metadata;
+      return await addMetadata(filePath);
     } catch (error) {
       logger.info(`[Migration] Failed to extract metadata from ${filePath}:`, error);
       return {};
@@ -66,18 +51,11 @@ class MigrationService {
     const tempFile = filePath.replace(ext, `.tmp${ext}`);
 
     try {
-      const metadataArgs = Object.entries(newMetadata)
-        .map(([k, v]) => {
-          const escaped = String(v).replace(/"/g, '\\"');
-          return `-metadata ${k}="${escaped}"`;
-        })
-        .join(' ');
-
-      const isMP4 = ['.mp4', '.m4a', '.mov'].includes(ext.toLowerCase());
-      const movflags = isMP4 ? '-movflags use_metadata_tags' : '';
-      const cmd = `ffmpeg -y -i "${filePath}" -c copy ${metadataArgs} ${movflags} "${tempFile}"`;
-
-      await execAsync(cmd, { maxBuffer: 10 * 1024 * 1024 });
+      await copyAudioWithMetadata({
+        inputPath: filePath,
+        outputPath: tempFile,
+        metadata: newMetadata,
+      });
 
       fs.copyFileSync(tempFile, filePath);
       fs.rmSync(tempFile);
@@ -142,7 +120,7 @@ class MigrationService {
   private shouldApplyRule(rule: MigrationRule, currentVersion: string | undefined): boolean {
     if (!currentVersion) return true;
 
-    const afterOrEqualToFrom = Version.compareVersions(currentVersion, rule.fromVersion) >= 0;
+    const afterOrEqualToFrom = Version.compareVersions(currentVersion, rule.fromVersion) > 0;
     const beforeOrEqualToTo = Version.compareVersions(currentVersion, rule.toVersion) <= 0;
 
     return afterOrEqualToFrom && beforeOrEqualToTo;
@@ -234,25 +212,25 @@ if (!global.migrationService) {
   });
 
   global.migrationService.registerRule({
-  fromVersion: '1.0.0',
-  toVersion: '1.1.0',
-  name: 'Add genres from MusicBrainz',
-  shouldMigrate: (metadata) => !metadata.genre,
-  migrate: async (filePath, metadata) => {
-    const artist = metadata.artist || metadata.albumartist;
-    const album = metadata.album;
-    const date = metadata.date;
-    if (!artist || !album || !date) return;
+    fromVersion: '1.0.0',
+    toVersion: '1.1.0',
+    name: 'Add genres from MusicBrainz',
+    shouldMigrate: (metadata) => !metadata.genre,
+    migrate: async (filePath, metadata) => {
+      const artist = metadata.artist || metadata.albumartist;
+      const album = metadata.album;
+      const date = metadata.date;
+      if (!artist || !album || !date) return;
 
-    const year = date.split('-')[0];
-    const genres = await MusicBrainz.getGenres(album, artist, year);
-    if (genres.length === 0) return;
+      const year = date.split('-')[0];
+      const genres = await MusicBrainz.getGenres(album, artist, year);
+      if (genres.length === 0) return;
 
-    await migrationService['updateMetadata'](filePath, {
-      genre: genres.join(', ')
-    });
-  }
-});
+      await migrationService['updateMetadata'](filePath, {
+        genre: genres.join(', ')
+      });
+    }
+  });
 }
 
 export default global.migrationService;
