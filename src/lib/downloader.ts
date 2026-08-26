@@ -218,6 +218,14 @@ class Downloader {
         }
       }
       throw (e);
+    } finally {
+      if (tmpFile) {
+        try {
+          tmpFile.removeCallback();
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
     }
   }
 
