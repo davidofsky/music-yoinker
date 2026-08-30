@@ -10,5 +10,6 @@ export interface IProvider {
   searchTrack(query: string): Promise<ITrack[]>;
   searchAlbumTracks(id: string): Promise<ITrack[]>;
   searchArtistAlbums(id: string): Promise<IAlbum[]>;
+  searchArtistSingles(id: string): Promise<IAlbum[]>;
   downloadTrack(id: string): Promise<DownloadTrackSource>;
 }

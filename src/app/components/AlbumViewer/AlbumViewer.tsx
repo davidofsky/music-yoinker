@@ -1,10 +1,10 @@
 import { FaDownload } from 'react-icons/fa'
-import "./AlbumViewer.css"
 import axios from "axios"
-import { FaXmark } from "react-icons/fa6"
+import { Modal, Button, Typography, Listy } from "antd"
 import { OpenAlbumCtx } from "@/app/context"
 import { useContext, useState } from "react"
-import Modal from "../Modal/Modal"
+
+const { Title, Text } = Typography
 
 const AlbumViewer = () => {
   const [openAlbum, setOpenAlbum] = useContext(OpenAlbumCtx)!
@@ -29,36 +29,44 @@ const AlbumViewer = () => {
   }
 
   return (
-    <Modal isOpen={!!openAlbum} onClose={closeAction}>
-      <h1 className="ModalTitle">{openAlbum?.Title} ({openAlbum?.ReleaseDate?.split("-")[0]})</h1>
-      <h1 className="ModalSubTitle">{openAlbum?.Artist}</h1>
-      <h1>Tracks</h1>
-      <div className="Tracklist">
-        {openAlbum?.Tracks.map((t, i) => {
-          return (
-            <div key={t.id} className="Track">{i+1}. {t.title}</div>
-          )
-        })}
-      </div>
-      <br/>
-      <div className="ModalFooter">
-        <button
-          className="HoverButtonRed"
-          onClick={closeAction}
-          disabled={isDownloading}>
-          <FaXmark/>
-          Close page
-        </button>
-        <button
-          className="HoverButtonGreen"
+    <Modal
+      open={!!openAlbum}
+      onCancel={closeAction}
+      title={
+        <>
+          <Title level={4} style={{ margin: 0 }}>
+            {openAlbum?.Title} {openAlbum?.ReleaseDate && `(${openAlbum.ReleaseDate.split("-")[0]})`}
+          </Title>
+          <Text type="secondary">{openAlbum?.Artist}</Text>
+        </>
+      }
+      footer={[
+        <Button key="close" danger onClick={closeAction} disabled={isDownloading}>
+          Close
+        </Button>,
+        <Button
+          key="download"
+          type="primary"
+          icon={<FaDownload />}
+          loading={isDownloading}
           onClick={() => {
             downloadAlbum();
             closeAction();
           }}
-          disabled={isDownloading}>
-          <FaDownload/>
+        >
           {isDownloading ? 'Adding...' : 'Add to library'}
-        </button>
+        </Button>,
+      ]}
+    >
+      <div style={{ maxHeight: '50vh', overflowY: 'auto' }}>
+        <Listy
+          virtual={false}
+          items={openAlbum?.Tracks ?? []}
+          rowKey={(t) => t.id}
+          itemRender={(t, i) => (
+            <div style={{ padding: '8px 0' }}>{i + 1}. {t.title}</div>
+          )}
+        />
       </div>
     </Modal>
   )

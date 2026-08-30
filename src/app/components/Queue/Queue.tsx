@@ -1,21 +1,18 @@
 "use client"
 import { FaTasks } from 'react-icons/fa'
-import { FaXmark } from 'react-icons/fa6';
 import { useQueue } from '@/app/hooks/useQueue';
 import { useContext, useEffect, useState } from 'react';
 import axios from 'axios';
-import { LoadingCtx, OpenAlbumCtx, OpenArtistCtx, OpenQueueCtx } from '@/app/context';
-import Modal from '@/app/components/Modal/Modal';
-import "./Queue.css"
+import { Drawer, Flex, FloatButton, Typography } from 'antd';
+import { OpenQueueCtx } from '@/app/context';
 import { useGroupedQueue } from '@/app/hooks/useGroupedQueue';
 import { QueueItemRow } from './QueueItemRow';
 import { QueuedGroup } from './QueuedGroup';
 
+const { Text } = Typography;
+
 const Queue = () => {
   const [openQueue, setOpenQueue] = useContext(OpenQueueCtx)!;
-  const [loading] = useContext(LoadingCtx)!;
-  const [openAlbum] = useContext(OpenAlbumCtx)!;
-  const [openArtist] = useContext(OpenArtistCtx)!;
   const queuedTracks = useQueue();
   const [currentDownload, setCurrentDownload] = useState<string|null>(null);
   const { groupedQueue } = useGroupedQueue(queuedTracks);
@@ -73,34 +70,26 @@ const Queue = () => {
 
   return (
     <>
-      <Modal isOpen={openQueue} onClose={() => setOpenQueue(false)}>
-        <h1 className='ModalTitle'>Download queue {queuedTracks.length > 0 && `(${queuedTracks.length} remaining)`}</h1>
-        <div className='QueuedList'>
+      <Drawer
+        title={`Download queue ${queuedTracks.length > 0 ? `(${queuedTracks.length} remaining)` : ''}`}
+        open={openQueue}
+        onClose={() => setOpenQueue(false)}
+      >
+        <Flex vertical gap="small" style={{ maxHeight: '75vh', overflowY: 'auto' }}>
           {queuedTracks.length === 0 ? (
-            <p className='EmptyQueue'>Queue is empty</p>
+            <Text type="secondary">Queue is empty</Text>
           ) : (
             groupedQueue.map((group, groupIndex) => renderQueueItem(group, groupIndex))
           )}
-        </div>
-        <div className='ModalFooter'>
-          <button
-            className="HoverButtonRed"
-            onClick={() => setOpenQueue(false)}>
-            <FaXmark/>
-            Close page
-          </button>
-        </div>
-      </Modal>
-      <div
-        className={`Queue ${loading || openAlbum || openQueue || openArtist ? 'blur' : ''}`}
-        onClick={() => setOpenQueue(true)}>
-        <FaTasks/>
-        {currentDownload ? (
-          <p>{currentDownload}</p>
-        ) : (
-          <p>Queue is empty</p>
-        )}
-      </div>
+        </Flex>
+      </Drawer>
+      <FloatButton
+        icon={<FaTasks />}
+        tooltip={currentDownload ?? "Queue is empty"}
+        shape="square"
+        onClick={() => setOpenQueue(true)}
+        badge={{ count: queuedTracks.length, overflowCount: 99 }}
+      />
     </>
   )
 }

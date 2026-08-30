@@ -8,5 +8,6 @@ export class QobuzProvider implements IProvider {
   searchTrack(query: string) { return QobuzDl.searchTrack(query); }
   searchAlbumTracks(id: string) { return QobuzDl.searchAlbumTracks(id); }
   searchArtistAlbums(id: string) { return QobuzDl.searchArtistAlbums(id); }
+  searchArtistSingles(id: string) { return QobuzDl.searchArtistSingles(id); }
   downloadTrack(id: string) { return QobuzDl.downloadTrack(id); }
 }

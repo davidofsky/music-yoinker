@@ -1,5 +1,8 @@
+import { Card, Flex, Typography } from 'antd';
 import { QueueItemRow } from './QueueItemRow';
 import { ITrack } from '@/app/interfaces/track.interface';
+
+const { Text } = Typography;
 
 interface QueuedGroupProps {
   title?: string;
@@ -10,12 +13,12 @@ interface QueuedGroupProps {
 
 export function QueuedGroup({ title, tracks, getGlobalTrackIndex, onRemoveTrack }: QueuedGroupProps) {
   return (
-    <div className='QueuedGroup'>
-      <div className='QueuedGroupHeader'>
-        <p className='QueuedGroupTitle'>{title}</p>
-        <span className='QueuedGroupItemCount'>{tracks.length} tracks</span>
-      </div>
-      <div className='QueuedGroupItems'>
+    <Card
+      size="small"
+      title={<Text ellipsis style={{ maxWidth: 200 }}>{title}</Text>}
+      extra={<Text type="secondary">{tracks.length} tracks</Text>}
+    >
+      <Flex vertical gap="small">
         {tracks.map((track, trackIndex) => (
           <QueueItemRow
             key={track.id}
@@ -24,7 +27,7 @@ export function QueuedGroup({ title, tracks, getGlobalTrackIndex, onRemoveTrack 
             onRemove={onRemoveTrack}
           />
         ))}
-      </div>
-    </div>
+      </Flex>
+    </Card>
   );
 }

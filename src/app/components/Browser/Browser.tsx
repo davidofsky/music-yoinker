@@ -1,16 +1,21 @@
 "use client"
 import { useContext, useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Flex, Layout, Segmented, Typography, theme } from "antd";
 import SearchBar from "../SearchBar/SearchBar";
 import ChromaGrid, { ChromaItem } from "../../reactbits/ChromaGrid";
-import { OpenQueueCtx, OpenAlbumCtx, LoadingCtx, OpenArtistCtx } from "@/app/context";
+import { OpenQueueCtx, OpenAlbumCtx, LoadingCtx } from "@/app/context";
 import { useOpenAlbum } from "@/app/hooks/useOpenAlbum";
+import { albumToChromaItem, CHROMA_GRID_CONFIG, GRID_CONTENT_STYLE } from "@/app/utils/chromaMappers";
 
-import "./Browser.css"
 import axios from "axios";
 import { ITrack } from "@/app/interfaces/track.interface";
 import { IAlbum } from "@/app/interfaces/album.interface";
 import { IArtist } from "@/app/interfaces/artist.interface";
+
+const { Header, Content } = Layout;
+const { Title } = Typography;
+const { useToken } = theme;
 
 export enum BrowseMode {
   Albums,
@@ -18,19 +23,13 @@ export enum BrowseMode {
   Artists
 }
 
-const CHROMA_GRID_CONFIG = {
-  damping: 0.45,
-  fadeOut: 0.6,
-  ease: "power3.out" as const,
-  columns: 4
-}
-
 const Browser = () => {
   const [openAlbum, setOpenAlbum] = useContext(OpenAlbumCtx)!;
-  const [openArtist, setOpenArtist] = useContext(OpenArtistCtx)!;
   const [openQueue] = useContext(OpenQueueCtx)!;
   const [loading, setLoading] = useContext(LoadingCtx)!;
   const { openAlbum: openAlbumFromHook } = useOpenAlbum();
+  const { token } = useToken();
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [browseMode, setBrowseMode] = useState<BrowseMode>(BrowseMode.Albums)
@@ -84,26 +83,13 @@ const Browser = () => {
     setLoading(false);
   }
 
-  const AlbumToCI = (album: IAlbum) : ChromaItem => {
-    return {
-      image: album.artwork,
-      artist: album.artists[0].name,
-      year: album.releaseDate.split("-")[0],
-      title: `${album.title}`,
-      borderColor: "#aaa",
-      gradient: `linear-gradient(145deg, ${album.vibrantColor}, #000000)`,
-      isDownloaded: album.isDownloaded,
-      onClick: () => openAlbumFromHook(album)
-    }
-  }
-
   const TrackToCI = (track: ITrack) : ChromaItem => {
     return {
       image: track.artwork,
       artist: track.artist.name,
       title: track.title,
       borderColor: "#aaa",
-      gradient: `linear-gradient(145deg, ${track.album.vibrantColor}, #000000)`,
+      gradient: `linear-gradient(145deg, ${track.album.vibrantColor || "#1f1f1f"}, #000000)`,
       isDownloaded: track.isDownloaded,
       onClick: (() => {
         setOpenAlbum({
@@ -123,7 +109,8 @@ const Browser = () => {
       borderColor: "#aaa",
       gradient: "linear-gradient(145deg, #1f1f1f, #000000)",
       onClick: (() => {
-        setOpenArtist(artist);
+        const url = artist.source ? `/artist/${artist.id}?source=${artist.source}` : `/artist/${artist.id}`;
+        router.push(url);
       })
     }
   }
@@ -131,7 +118,7 @@ const Browser = () => {
   const getItemsForMode = (): ChromaItem[] => {
     switch (browseMode) {
       case BrowseMode.Albums:
-        return albums.map(AlbumToCI);
+        return albums.map(a => albumToChromaItem(a, openAlbumFromHook));
       case BrowseMode.Tracks:
         return tracks.map(TrackToCI);
       case BrowseMode.Artists:
@@ -140,61 +127,55 @@ const Browser = () => {
   }
 
   return (
-    <div>
-      <div className={(loading||openAlbum||openQueue||openArtist)? "Browser Blur" : "Browser"}>
-        <h1 className="Title">
-          Music Yoinker
-        </h1>
+    <Layout style={{ minHeight: '100vh', filter: (loading || openAlbum || openQueue) ? 'blur(8px)' : undefined }}>
+      <Header style={{ height: 'auto', lineHeight: 'normal', borderBottom: `1px solid ${token.colorBorderSecondary}` }}>
+        <Flex vertical align="center" gap="middle" style={{ padding: '24px 0' }}>
+          <Title style={{ margin: 0, fontFamily: 'var(--font-bbh-bogle)' }}>
+            YOINKER
+          </Title>
 
-        <SearchBar
-          browseMode={browseMode}
-          setAlbums={setAlbums}
-          setTracks={setTracks}
-          setArtists={setArtists}/>
-        <br/>
-        <p>
-          <label>Browse </label>
-          <select value={
-            browseMode === BrowseMode.Albums ? 'albums' :
-            browseMode === BrowseMode.Tracks ? 'singles' :
-            'artists'
-          } onChange={(e) => {
-            const newMode = e.currentTarget.value;
-            if (newMode === "albums") {
-              setBrowseMode(BrowseMode.Albums);
-            } else if (newMode === "singles") {
-              setBrowseMode(BrowseMode.Tracks);
-            } else if (newMode === "artists") {
-              setBrowseMode(BrowseMode.Artists);
-            }
+          <Flex wrap align="center" justify="center" gap="middle">
+            <SearchBar
+              browseMode={browseMode}
+              setAlbums={setAlbums}
+              setTracks={setTracks}
+              setArtists={setArtists}/>
 
-            // Update URL with new mode
-            const query = searchParams.get('q');
-            if (query) {
-              const newParams = new URLSearchParams();
-              newParams.set('q', query);
-              newParams.set('mode', newMode);
-              window.history.replaceState({}, '', `?${newParams.toString()}`);
-            }
-          }}>
-            <option value="albums">Albums</option>
-            <option value="singles">Singles</option>
-            <option value="artists">Artists</option>
-          </select>
-        </p>
+            <Segmented
+              value={browseMode}
+              onChange={(value) => {
+                const newMode = value as BrowseMode;
+                setBrowseMode(newMode);
 
-        <div>
-          <br/>
-          <ChromaGrid
-            items={getItemsForMode()}
-            damping={CHROMA_GRID_CONFIG.damping}
-            fadeOut={CHROMA_GRID_CONFIG.fadeOut}
-            ease={CHROMA_GRID_CONFIG.ease}
-            columns={CHROMA_GRID_CONFIG.columns}
-          />
-        </div>
-      </div>
-    </div>
+                const query = searchParams.get('q');
+                if (query) {
+                  const modeString = newMode === BrowseMode.Albums ? 'albums' : newMode === BrowseMode.Tracks ? 'singles' : 'artists';
+                  const newParams = new URLSearchParams();
+                  newParams.set('q', query);
+                  newParams.set('mode', modeString);
+                  window.history.replaceState({}, '', `?${newParams.toString()}`);
+                }
+              }}
+              options={[
+                { label: "Albums", value: BrowseMode.Albums },
+                { label: "Singles", value: BrowseMode.Tracks },
+                { label: "Artists", value: BrowseMode.Artists },
+              ]}
+            />
+          </Flex>
+        </Flex>
+      </Header>
+
+      <Content style={GRID_CONTENT_STYLE}>
+        <ChromaGrid
+          items={getItemsForMode()}
+          damping={CHROMA_GRID_CONFIG.damping}
+          fadeOut={CHROMA_GRID_CONFIG.fadeOut}
+          ease={CHROMA_GRID_CONFIG.ease}
+          columns={CHROMA_GRID_CONFIG.columns}
+        />
+      </Content>
+    </Layout>
   )
 }
 export default Browser;

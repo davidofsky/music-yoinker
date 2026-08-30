@@ -1,8 +1,10 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 /data
+/logs
 /music
 /docker-compose.yml
+.last-migration-version
 
 # dependencies
 /node_modules

@@ -1,9 +1,18 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { FaCircleInfo, FaCircleExclamation, FaXmark, FaTriangleExclamation } from "react-icons/fa6";
-import { Log } from "@/lib/logger";
+import { Button, Card, Flex, Tag, Typography } from "antd";
 import "./LogList.css"
 import { useLog } from "@/app/hooks/useLog";
+
+const { Text } = Typography;
+
+const LEVEL_COLOR: Record<string, string> = {
+    error: "red",
+    warn: "gold",
+    info: "blue",
+    debug: "default",
+};
 
 const getLogIcon = (level: string) => {
     switch (level) {
@@ -31,30 +40,32 @@ export function LogList() {
     }, [logs, sticky]);
 
     return (
-      <>
-        <div className="LogList" ref={listRef}>
+      <Flex vertical align="center" gap="middle" style={{ width: '100%', maxWidth: '50em' }}>
+        <Flex vertical gap="small" ref={listRef} style={{ width: '100%', maxHeight: '75vh', overflowY: 'auto' }}>
             {logs.map((log, index) => (
-                <div key={index} className={`LogItem ${log.level}`}>
-                    <div className="LogIcon">{getLogIcon(log.level)}</div>
-
-                    <div className="LogContent">
-                        <div className="LogHeader">
-                            <span className="LogLevel">{log.level}</span>
-                            <span className="LogTime">
-                                {new Date(log.timestamp).toLocaleString()}
-                            </span>
-                        </div>
-                        <p className="LogMessage">{log.message}</p>
-                    </div>
-                </div>
+                <Card key={index} size="small" className="LogItem">
+                    <Flex align="center" gap="small">
+                        {getLogIcon(log.level)}
+                        <Flex vertical style={{ flex: 1 }}>
+                            <Flex align="center" gap="small">
+                                <Tag color={LEVEL_COLOR[log.level] ?? "default"}>{log.level}</Tag>
+                                <Text type="secondary" style={{ fontSize: '80%' }}>
+                                    {new Date(log.timestamp).toLocaleString()}
+                                </Text>
+                            </Flex>
+                            <Text>{log.message}</Text>
+                        </Flex>
+                    </Flex>
+                </Card>
             ))}
             <div ref={bottomRef} />
-        </div>
-        <button className={`StickyButton ${sticky ? 'Enabled' : 'Disabled'}`}
-          onClick={() => {setSticky(!sticky)}}>
-          Stick to bottom {sticky? "(enabled)" : "(disabled)"}
-        </button>
-      </>
+        </Flex>
+        <Button
+          type={sticky ? "primary" : "default"}
+          style={{ alignSelf: 'flex-end' }}
+          onClick={() => setSticky(!sticky)}>
+          Stick to bottom {sticky ? "(enabled)" : "(disabled)"}
+        </Button>
+      </Flex>
     );
 }
-

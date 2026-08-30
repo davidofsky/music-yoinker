@@ -160,13 +160,23 @@ class QobuzDl {
   }
 
   public static async searchArtistAlbums(id: string): Promise<IAlbum[]> {
+    return this.searchArtistReleases(id, 'album', 'QobuzSearchArtistAlbums');
+  }
+
+  public static async searchArtistSingles(id: string): Promise<IAlbum[]> {
+    // release_type value mirrors the verified 'album' one; unconfirmed against
+    // the live Qobuz API since this provider isn't enabled in this environment.
+    return this.searchArtistReleases(id, 'single', 'QobuzSearchArtistSingles');
+  }
+
+  private static async searchArtistReleases(id: string, releaseType: string, operationName: string): Promise<IAlbum[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get<{ success: boolean; data: QobuzReleasesResult }>(`${sourceUrl}/api/get-releases`, {
-        params: { artist_id: id, release_type: 'album', limit: 500 },
+        params: { artist_id: id, release_type: releaseType, limit: 500 },
         headers: this.getHeaders()
       });
       return (result.data.data?.items || []).map(a => this.mapAlbum(a));
-    }, 'QobuzSearchArtistAlbums');
+    }, operationName);
   }
 
   public static async downloadTrack(id: string): Promise<DownloadTrackSource> {
