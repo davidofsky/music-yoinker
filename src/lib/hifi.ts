@@ -61,6 +61,14 @@ class Hifi {
   }
 
   public static async searchArtistAlbums(id: string): Promise<IAlbum[]> {
+    return this.searchArtistReleases(id, 'ALBUM', 'SearchArtistAlbums');
+  }
+
+  public static async searchArtistSingles(id: string): Promise<IAlbum[]> {
+    return this.searchArtistReleases(id, 'SINGLE', 'SearchArtistSingles');
+  }
+
+  private static async searchArtistReleases(id: string, type: string, operationName: string): Promise<IAlbum[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/artist/`, {
         headers: this.DEFAULT_HEADERS,
@@ -68,10 +76,10 @@ class Hifi {
       });
 
       const allResults: IAlbum[] = result.data.albums.items || [];
-      const albums = allResults.filter((album) => album.type === 'ALBUM');
+      const releases = allResults.filter((album) => album.type === type);
 
-      return this.parseAlbums(albums);
-    }, 'SearchArtistAlbums');
+      return this.parseAlbums(releases);
+    }, operationName);
   }
 
   public static async searchArtist(query: string): Promise<IArtist[]> {
@@ -83,7 +91,8 @@ class Hifi {
 
       const artists: IArtist[] = result.data.data?.artists?.items || [];
       artists.forEach((artist) => {
-        artist.picture = artist.picture ? `https://resources.tidal.com/images/${artist.picture.replaceAll('-', '/')}/750x750.jpg` : '/david.jpeg';
+        artist.picture = this.resolveArtistPicture(artist.picture);
+        artist.source = 'tidal';
       });
 
       return artists.filter(Boolean);
@@ -227,9 +236,16 @@ class Hifi {
     return Array.from(map.values());
   }
 
+  private static resolveArtistPicture(picture: string): string {
+    return picture ? `https://resources.tidal.com/images/${picture.replaceAll('-', '/')}/750x750.jpg` : '/david.jpeg';
+  }
+
   private static parseAlbums(albums: IAlbum[]): IAlbum[] {
     albums.forEach((album: IAlbum) => {
       album.artwork = album.cover ? `https://resources.tidal.com/images/${album.cover.replaceAll('-', '/')}/640x640.jpg` : '';
+      album.artists.forEach((artist) => {
+        artist.picture = this.resolveArtistPicture(artist.picture);
+      });
     });
     return this.removeDoubleAlbums(albums.filter(Boolean));
   }

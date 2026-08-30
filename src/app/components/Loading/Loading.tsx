@@ -1,22 +1,11 @@
-import { motion } from "motion/react"
+import { Spin } from "antd";
 import { useContext } from "react";
 import { LoadingCtx } from "@/app/context";
 
 const Loading = () => {
-  const [ loading ]= useContext(LoadingCtx)!;
+  const [loading] = useContext(LoadingCtx)!;
 
-    return (
-      <>{loading && 
-        <div className="LoadingBackground">
-          <motion.div 
-            className="LoadingModal"
-            initial={{ scale: 0 }} animate={{ scale: 1 }}
-          >
-            Retrieving data...
-          </motion.div>
-        </div>
-      }</>
-    )
+  return <Spin size="large" description="Retrieving data..." fullscreen spinning={loading} />
 }
 
 export default Loading

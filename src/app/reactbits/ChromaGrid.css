@@ -13,11 +13,11 @@
   flex-direction: column;
   width: 18em;
   height: auto;
-  border-radius: .5em;
+  border-radius: .75em;
   margin: 0;
   overflow: hidden;
   border: 2px solid #333;
-  transition: border-color 0.3s ease;
+  transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
   background: var(--card-gradient);
 
   --mouse-x: 50%;
@@ -27,6 +27,8 @@
 
 .chroma-card:hover {
   border-color: var(--card-border);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
 }
 
 .chroma-card::before {
@@ -167,4 +169,3 @@
   opacity: 1;
   transition: opacity 0.25s ease;
 }
-

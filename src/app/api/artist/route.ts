@@ -6,12 +6,15 @@ import { getQueryParam, validateRequiredParam, addDownloadStatus, handleApiCall 
 export async function GET(req: Request) {
   const id = getQueryParam(req, 'id');
   const source = getQueryParam(req, 'source');
+  const type = getQueryParam(req, 'type');
   const validationError = validateRequiredParam(id, 'id');
   if (validationError) return validationError;
 
   const { data, error } = await handleApiCall(
     async () => {
-      const result = await musicRepository.searchArtistAlbums(id!, source);
+      const result = type === 'singles'
+        ? await musicRepository.searchArtistSingles(id!, source)
+        : await musicRepository.searchArtistAlbums(id!, source);
       return addDownloadStatus(result, (album) => Downloader.IsAlbumDownloaded(album));
     },
     'Retrieve failed'

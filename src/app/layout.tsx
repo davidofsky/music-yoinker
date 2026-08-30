@@ -1,16 +1,22 @@
 import type { Metadata } from "next";
-import { Geist, Zain } from "next/font/google";
+import localFont from "next/font/local";
+import Providers from "./Providers";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const spaceGrotesk = localFont({
+  src: [
+    { path: "./fonts/SpaceGrotesk-300.ttf", weight: "300" },
+    { path: "./fonts/SpaceGrotesk-400.ttf", weight: "400" },
+    { path: "./fonts/SpaceGrotesk-500.ttf", weight: "500" },
+    { path: "./fonts/SpaceGrotesk-600.ttf", weight: "600" },
+    { path: "./fonts/SpaceGrotesk-700.ttf", weight: "700" },
+  ],
+  display: "swap",
 });
 
-const zain = Zain({
-  subsets: ["latin"],
-  weight: ["200", "300", "400", "700", "800", "900"],
-  style: ["normal", "italic"],
+const bbhBogle = localFont({
+  src: "./fonts/BBHBogle-Regular.ttf",
+  variable: "--font-bbh-bogle",
   display: "swap",
 });
 
@@ -18,10 +24,6 @@ export const metadata: Metadata = {
   title: "Music Yoinker",
   description: "Dont sue me",
 };
-
-import "./globals.css";
-
-
 
 export default function RootLayout({
   children,
@@ -31,9 +33,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.className} ${zain.className} antialiased`}
+        className={`${spaceGrotesk.className} ${bbhBogle.variable} antialiased`}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

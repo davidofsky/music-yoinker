@@ -1,7 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { gsap } from 'gsap';
-import { motion } from 'motion/react'
 import { FaCheckCircle } from 'react-icons/fa';
 import './ChromaGrid.css';
 
@@ -114,7 +113,7 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
       onPointerLeave={handleLeave}
     >
       {data.map((c, i) => (
-        <motion.article title={c.title}
+        <article title={c.title}
           key={i}
           className="chroma-card"
           onMouseMove={handleCardMove}
@@ -145,7 +144,7 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
             <p className="role">{c.year}</p>
             {c.location && <span className="location">{c.location}</span>}
           </footer>
-        </motion.article>
+        </article>
       ))}
       <div className="chroma-overlay" />
       <div ref={fadeRef} className="chroma-fade" />
