@@ -7,6 +7,7 @@ import { DisplayItem } from "@/lib/interfaces";
 import AlbumViewer from "./components/AlbumViewer/AlbumViewer";
 import Queue from "./components/Queue/Queue";
 import Loading from "./components/Loading/Loading";
+import { QueueStateProvider } from "./hooks/useQueue";
 
 const Providers = ({ children }: { children: ReactNode }) => {
   return (
@@ -15,10 +16,12 @@ const Providers = ({ children }: { children: ReactNode }) => {
         <OpenAlbumCtx.Provider value={useState<DisplayItem | null>(null)}>
           <OpenQueueCtx.Provider value={useState<boolean>(false)}>
             <LoadingCtx.Provider value={useState<boolean>(false)}>
-              <Loading />
-              <AlbumViewer />
-              <Queue />
-              {children}
+              <QueueStateProvider>
+                <Loading />
+                <AlbumViewer />
+                <Queue />
+                {children}
+              </QueueStateProvider>
             </LoadingCtx.Provider>
           </OpenQueueCtx.Provider>
         </OpenAlbumCtx.Provider>
