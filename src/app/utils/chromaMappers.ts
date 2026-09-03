@@ -11,7 +11,11 @@ export const CHROMA_GRID_CONFIG = {
 
 export const GRID_CONTENT_STYLE: CSSProperties = { padding: '32px 24px', display: 'flex', justifyContent: 'center' }
 
-export const albumToChromaItem = (album: IAlbum, onOpen: (album: IAlbum) => void): ChromaItem => {
+export const albumToChromaItem = (
+  album: IAlbum,
+  onOpen: (album: IAlbum) => void,
+  isDownloading = false
+): ChromaItem => {
   return {
     image: album.artwork,
     artist: album.artists[0].name,
@@ -20,6 +24,7 @@ export const albumToChromaItem = (album: IAlbum, onOpen: (album: IAlbum) => void
     borderColor: "#aaa",
     gradient: `linear-gradient(145deg, ${album.vibrantColor || "#1f1f1f"}, #000000)`,
     isDownloaded: album.isDownloaded,
+    isDownloading,
     onClick: () => onOpen(album)
   }
 }

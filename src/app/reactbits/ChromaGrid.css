@@ -79,6 +79,30 @@
   font-size: 20px;
 }
 
+.chroma-downloading-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chroma-downloading-icon {
+  color: #60a5fa;
+  font-size: 20px;
+  animation: chroma-download-spin 1s linear infinite;
+}
+
+@keyframes chroma-download-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .chroma-info {
   position: relative;
   z-index: 1;
