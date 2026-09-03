@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
+import { QueueCtx } from '../context';
 import { ITrack } from '../interfaces/track.interface';
 
-export function useQueue() : ITrack[] {
+export function QueueStateProvider({ children }: { children: React.ReactNode }) {
   const [queue, setQueue] = useState<ITrack[]>([]);
 
   useEffect(() => {
@@ -21,6 +22,14 @@ export function useQueue() : ITrack[] {
     return () => es.close();
   }, []);
 
+  return <QueueCtx.Provider value={queue}>{children}</QueueCtx.Provider>;
+}
+
+export function useQueue(): ITrack[] {
+  const queue = useContext(QueueCtx);
+  if (queue === undefined) {
+    throw new Error('useQueue must be used within QueueStateProvider');
+  }
   return queue;
 }
 
