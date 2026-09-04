@@ -6,6 +6,7 @@ import SearchBar from "../SearchBar/SearchBar";
 import ChromaGrid, { ChromaItem } from "../../reactbits/ChromaGrid";
 import { OpenQueueCtx, OpenAlbumCtx, LoadingCtx } from "@/app/context";
 import { useOpenAlbum } from "@/app/hooks/useOpenAlbum";
+import { useQueue } from "@/app/hooks/useQueue";
 import { albumToChromaItem, CHROMA_GRID_CONFIG, GRID_CONTENT_STYLE } from "@/app/utils/chromaMappers";
 
 import axios from "axios";
@@ -28,6 +29,7 @@ const Browser = () => {
   const [openQueue] = useContext(OpenQueueCtx)!;
   const [loading, setLoading] = useContext(LoadingCtx)!;
   const { openAlbum: openAlbumFromHook } = useOpenAlbum();
+  const queuedTracks = useQueue();
   const { token } = useToken();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -36,6 +38,12 @@ const Browser = () => {
   const [albums, setAlbums] = useState<Array<IAlbum>>([])
   const [tracks, setTracks] = useState<Array<ITrack>>([])
   const [artists, setArtists] = useState<Array<IArtist>>([])
+  const downloadingAlbumIds = new Set(
+    queuedTracks
+      .map(track => track.album?.id)
+      .filter((albumId): albumId is number => albumId !== undefined)
+  );
+  const downloadingTrackIds = new Set(queuedTracks.map(track => track.id));
 
   useEffect(() => {
     const query = searchParams.get('q');
@@ -65,6 +73,13 @@ const Browser = () => {
     }
   }, [browseMode]);
 
+  useEffect(() => {
+    const query = searchParams.get('q');
+    if (query && (browseMode === BrowseMode.Albums || browseMode === BrowseMode.Tracks)) {
+      performSearch(query, browseMode);
+    }
+  }, [queuedTracks]);
+
   const performSearch = async (query: string, mode: BrowseMode) => {
     setLoading(true);
     const stateSetterConfig = {
@@ -83,7 +98,7 @@ const Browser = () => {
     setLoading(false);
   }
 
-  const TrackToCI = (track: ITrack) : ChromaItem => {
+  const TrackToCI = (track: ITrack, isDownloading = false) : ChromaItem => {
     return {
       image: track.artwork,
       artist: track.artist.name,
@@ -91,6 +106,7 @@ const Browser = () => {
       borderColor: "#aaa",
       gradient: `linear-gradient(145deg, ${track.album.vibrantColor || "#1f1f1f"}, #000000)`,
       isDownloaded: track.isDownloaded,
+      isDownloading,
       onClick: (() => {
         setOpenAlbum({
           Title: track.album.title,
@@ -118,9 +134,9 @@ const Browser = () => {
   const getItemsForMode = (): ChromaItem[] => {
     switch (browseMode) {
       case BrowseMode.Albums:
-        return albums.map(a => albumToChromaItem(a, openAlbumFromHook));
+        return albums.map(a => albumToChromaItem(a, openAlbumFromHook, downloadingAlbumIds.has(a.id)));
       case BrowseMode.Tracks:
-        return tracks.map(TrackToCI);
+        return tracks.map(track => TrackToCI(track, downloadingTrackIds.has(track.id)));
       case BrowseMode.Artists:
         return artists.map(ArtistToCI);
     }

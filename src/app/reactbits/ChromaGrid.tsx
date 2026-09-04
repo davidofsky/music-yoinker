@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { gsap } from 'gsap';
-import { FaCheckCircle } from 'react-icons/fa';
+import { FaCheckCircle, FaSpinner } from 'react-icons/fa';
 import './ChromaGrid.css';
 
 export interface ChromaItem {
@@ -16,6 +16,7 @@ export interface ChromaItem {
   gradient?: string;
   onClick: () => void;
   isDownloaded?: boolean;
+  isDownloading?: boolean;
 }
 
 export interface ChromaGridProps {
@@ -130,11 +131,15 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
             <div className="chroma-img-inner">
               <Image src={c.image} alt={c.title} loading="lazy" fill sizes='100%' />
             </div>
-            {c.isDownloaded && (
+            {c.isDownloaded ? (
               <div className="chroma-downloaded-badge">
                 <FaCheckCircle className="chroma-downloaded-icon" />
               </div>
-            )}
+            ) : c.isDownloading ? (
+              <div className="chroma-downloading-badge" aria-label="Downloading" title="Downloading">
+                <FaSpinner className="chroma-downloading-icon" />
+              </div>
+            ) : null}
           </div>
           <footer className="chroma-info">
             <h3 className="name">{c.title}</h3>
