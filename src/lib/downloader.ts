@@ -119,7 +119,8 @@ class Downloader {
       const fetchHeaders = downloadSource.fetchHeaders ?? {};
 
       logger.info(`[Downloader] Download source type: ${downloadSource.type}`);
-      logger.info(`[Downloader] Fetching URLs: ${urls.join(', ')}`);
+      logger.info(`[Downloader] Fetching URLs: ${urls.length} total`);
+      logger.debug(`[Downloader] Fetching URLs: ${urls.join(', ')}`);
 
       const buffers: Buffer[] = [];
       let contentType: string | undefined;
