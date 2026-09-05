@@ -75,7 +75,7 @@ const Queue = () => {
         open={openQueue}
         onClose={() => setOpenQueue(false)}
       >
-        <Flex vertical gap="small" style={{ maxHeight: '75vh', overflowY: 'auto' }}>
+        <Flex vertical gap="small">
           {queuedTracks.length === 0 ? (
             <Text type="secondary">Queue is empty</Text>
           ) : (
