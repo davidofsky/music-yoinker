@@ -13,6 +13,27 @@ function buildMetadataArgs(newMetadata: Record<string, string>): string[] {
   return args;
 }
 
+function isFlac(filePath: string): boolean {
+  return path.extname(filePath).toLowerCase() === '.flac';
+}
+
+/**
+ * lucida encodes its FLACs as a stream, which leaves `total samples = 0` in the
+ * header, so the track length is seen as 0:00. The file has to be re-encoded in this case.
+ */
+async function hasUnknownDuration(filePath: string): Promise<boolean> {
+  const { stdout } = await execFileAsync('ffprobe', [
+    '-v', 'quiet',
+    '-show_entries', 'format=duration',
+    '-of', 'csv=p=0',
+    filePath,
+  ]);
+
+  const duration = Number.parseFloat(stdout.trim());
+
+  return !Number.isFinite(duration) || duration <= 0;
+}
+
 function isMp4Like(filePath: string): boolean {
   const extension = path.extname(filePath).toLowerCase();
   return ['.mp4', '.m4a', '.mov'].includes(extension);
@@ -46,17 +67,20 @@ export async function copyAudioWithMetadata(options: {
   const { inputPath, outputPath, metadata, coverPath } = options;
   const args: string[] = ['-y', '-i', inputPath];
 
+  // Re-encoding rewrites the header with the real sample count; copying cannot.
+  const audioCodec = isFlac(outputPath) && await hasUnknownDuration(inputPath) ? 'flac' : 'copy';
+
   if (coverPath) {
     args.push(
       '-i', coverPath,
       '-map', '0:a',
       '-map', '1:0',
-      '-c:a', 'copy',
+      '-c:a', audioCodec,
       '-c:v', 'copy',
       '-disposition:v:0', 'attached_pic'
     );
   } else {
-    args.push('-c:a', 'copy');
+    args.push('-c:a', audioCodec);
   }
 
   args.push(...buildMetadataArgs(metadata));

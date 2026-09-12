@@ -74,7 +74,6 @@ interface QobuzReleasesResult {
 }
 
 class QobuzDl {
-  private static maxRetries = 3;
   private static retryDelayInMs = 2000;
   private static qobuzSource = 0;
 
@@ -94,7 +93,7 @@ class QobuzDl {
   ): Promise<T> {
     const sources = Config.QOBUZ_DL_SOURCES;
     if (sources.length === 0) throw new Error(`[${operationName}] No Qobuz-DL sources configured`);
-    const totalAttempts = sources.length * this.maxRetries;
+    const totalAttempts = sources.length * Config.DOWNLOAD_MAX_RETRIES;
     let lastError: unknown = null;
 
     for (let attempt = 0; attempt < totalAttempts; attempt++) {
