@@ -33,6 +33,10 @@ class Config {
     return ['27', '7', '6', '5'].includes(q) ? q : '27';
   }
 
+  static get LUCIDA_API_URL(): string {
+    return process.env.LUCIDA_API_URL || '';
+  }
+
   static get MUSIC_DIRECTORY(): string {
     return process.env.MUSIC_DIRECTORY || '';
   }
@@ -66,6 +70,11 @@ class Config {
     const raw = process.env.TRACK_PAD_LENGTH ?? '0';
     const n = parseInt(raw, 10);
     return Number.isFinite(n) && n > 0 ? n : 2;
+  }
+
+  static get DOWNLOAD_MAX_RETRIES(): number {
+    const n = parseInt(process.env.DOWNLOAD_MAX_RETRIES ?? '', 10);
+    return Number.isFinite(n) && n > 0 ? n : 3;
   }
 
   static get TRACK_TITLE_SEPARATOR(): string {

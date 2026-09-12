@@ -3,6 +3,7 @@ import tmp from 'tmp';
 import axios, { AxiosError } from "axios";
 import path from 'path';
 import Tidal from "./tidal"
+import Lucida from './lucida';
 import { broadcast, Topic } from '@/lib/broadcast';
 import { PegTheFile } from './pegger';
 import { DownloadTrackSource } from './hifi'
@@ -106,7 +107,7 @@ class Downloader {
 
     try {
       logger.info(`Downloading track: ${track.title}`);
-      const downloadSource: DownloadTrackSource = await musicRepository.downloadTrack(track.id.toString(), track.source);
+      const downloadSource: DownloadTrackSource = await this.resolveDownloadSource(track);
       const tidalAlbum = track.source === 'qobuz'
         ? Promise.resolve({ albumArtist: track.artist.name, releaseDate: track.releaseDate || '', genres: [] as string[] })
         : Tidal.getAlbum(track.album.id.toString()).catch(err => {
@@ -122,19 +123,8 @@ class Downloader {
       logger.info(`[Downloader] Fetching URLs: ${urls.length} total`);
       logger.debug(`[Downloader] Fetching URLs: ${urls.join(', ')}`);
 
-      const buffers: Buffer[] = [];
-      let contentType: string | undefined;
+      const { payload, contentType } = await this.fetchPayload(urls, fetchHeaders);
 
-      for (const url of urls) {
-        const response = await axios.get(url, { responseType: 'arraybuffer', timeout: 60000, headers: fetchHeaders });
-        if (!contentType) {
-          const ct = response.headers['content-type'];
-          contentType = typeof ct === 'string' ? ct : undefined;
-        }
-        buffers.push(Buffer.from(response.data));
-      }
-
-      const payload = Buffer.concat(buffers);
       const extension = downloadSource.extension ?? this.resolveExtensionFromContentType(contentType, defaultExtension);
 
       tmpFile = tmp.fileSync({ postfix: extension });
@@ -208,7 +198,8 @@ class Downloader {
       logger.info(`Completed track: ${track.title}`);
     } catch (e) {
       if (e instanceof AxiosError) {
-        logger.error(e.response)
+        // Don't log the raw axios response: it holds circular req/res refs that crash the JSON logger.
+        logger.error(`Download request failed: ${e.response?.status ?? e.code} ${JSON.stringify(e.response?.data) ?? ''}`)
       }
       // Clean up tmp file on error if it exists
       if (tmpFile) {
@@ -228,6 +219,36 @@ class Downloader {
         }
       }
     }
+  }
+
+  private async resolveDownloadSource(track: ITrack): Promise<DownloadTrackSource> {
+    try {
+      return await musicRepository.downloadTrack(track.id.toString(), track.source);
+    } catch (e) {
+      // Try lucida api as a last resort (cause amazon search is a bit unreliable)
+      if (!Config.LUCIDA_API_URL) throw e;
+      logger.warn(`[Downloader] Could not resolve a download url for ${track.title}, falling back to Lucida:`, e);
+    }
+
+    const url = await new Lucida().getDownloadUrl(track.artist.name, track.title);
+    // No extension: Lucida serves whatever the upstream store has, so the content-type decides.
+    return { type: 'direct', url };
+  }
+
+  private async fetchPayload(urls: string[], fetchHeaders: Record<string, string>): Promise<{ payload: Buffer; contentType?: string }> {
+    const buffers: Buffer[] = [];
+    let contentType: string | undefined;
+
+    for (const url of urls) {
+      const response = await axios.get(url, { responseType: 'arraybuffer', timeout: 60000, headers: fetchHeaders });
+      if (!contentType) {
+        const ct = response.headers['content-type'];
+        contentType = typeof ct === 'string' ? ct : undefined;
+      }
+      buffers.push(Buffer.from(response.data));
+    }
+
+    return { payload: Buffer.concat(buffers), contentType };
   }
 
   private removeExistingAlbum(albumDir: string) {

@@ -11,7 +11,6 @@ export type DownloadTrackSource =
 
 class Hifi {
   private static readonly DEFAULT_HEADERS = { accept: 'application/vnd.api+json' };
-  private static maxRetries = 3;
   private static retryDelayInMs = 2000;
   private static hifiSource = 0;
 
@@ -24,7 +23,7 @@ class Hifi {
     operationName: string,
   ): Promise<T> {
     const sources = Config.HIFI_SOURCES;
-    const totalAttempts = sources.length * this.maxRetries;
+    const totalAttempts = sources.length * Config.DOWNLOAD_MAX_RETRIES;
     let lastError: any = null;
 
     for (let attempt = 0; attempt < totalAttempts; attempt++) {
