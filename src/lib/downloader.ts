@@ -123,7 +123,7 @@ class Downloader {
       logger.info(`[Downloader] Fetching URLs: ${urls.length} total`);
       logger.debug(`[Downloader] Fetching URLs: ${urls.join(', ')}`);
 
-      const { payload, contentType } = await this.fetchPayload(urls, fetchHeaders);
+      const { payload, contentType } = await this.fetchPayload(urls, fetchHeaders, downloadSource.timeoutMs);
 
       const extension = downloadSource.extension ?? this.resolveExtensionFromContentType(contentType, defaultExtension);
 
@@ -232,15 +232,16 @@ class Downloader {
 
     const url = await new Lucida().getDownloadUrl(track.artist.name, track.title);
     // No extension: Lucida serves whatever the upstream store has, so the content-type decides.
-    return { type: 'direct', url };
+    // Lucida sends nothing while it rips, so the fetch needs far longer than a direct download.
+    return { type: 'direct', url, timeoutMs: Config.LUCIDA_DOWNLOAD_TIMEOUT_MS };
   }
 
-  private async fetchPayload(urls: string[], fetchHeaders: Record<string, string>): Promise<{ payload: Buffer; contentType?: string }> {
+  private async fetchPayload(urls: string[], fetchHeaders: Record<string, string>, timeoutMs = Config.DOWNLOAD_TIMEOUT_MS): Promise<{ payload: Buffer; contentType?: string }> {
     const buffers: Buffer[] = [];
     let contentType: string | undefined;
 
     for (const url of urls) {
-      const response = await axios.get(url, { responseType: 'arraybuffer', timeout: 60000, headers: fetchHeaders });
+      const response = await axios.get(url, { responseType: 'arraybuffer', timeout: timeoutMs, headers: fetchHeaders });
       if (!contentType) {
         const ct = response.headers['content-type'];
         contentType = typeof ct === 'string' ? ct : undefined;

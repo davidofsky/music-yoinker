@@ -37,6 +37,18 @@ class Config {
     return process.env.LUCIDA_API_URL || '';
   }
 
+  /**
+   * Lucida goes quiet while it rips a track — before the first byte, and again
+   * whenever it re-rips to resume a dropped transfer. Since axios counts this
+   * as socket idle time, the limit has to cover a whole rip, not a stalled
+   * connection. lucida-api gives up on a rip after 5 minutes, so anything past
+   * that plus a minute of margin only delays noticing a wedged download.
+   */
+  static get LUCIDA_DOWNLOAD_TIMEOUT_MS(): number {
+    const n = parseInt(process.env.LUCIDA_DOWNLOAD_TIMEOUT_SECONDS ?? '', 10);
+    return (Number.isFinite(n) && n > 0 ? n : 360) * 1000;
+  }
+
   static get MUSIC_DIRECTORY(): string {
     return process.env.MUSIC_DIRECTORY || '';
   }
@@ -70,6 +82,11 @@ class Config {
     const raw = process.env.TRACK_PAD_LENGTH ?? '0';
     const n = parseInt(raw, 10);
     return Number.isFinite(n) && n > 0 ? n : 2;
+  }
+
+  static get DOWNLOAD_TIMEOUT_MS(): number {
+    const n = parseInt(process.env.DOWNLOAD_TIMEOUT_SECONDS ?? '', 10);
+    return (Number.isFinite(n) && n > 0 ? n : 60) * 1000;
   }
 
   static get DOWNLOAD_MAX_RETRIES(): number {

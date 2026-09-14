@@ -6,8 +6,8 @@ import { IAlbum } from '@/app/interfaces/album.interface';
 import { IArtist } from '@/app/interfaces/artist.interface';
 
 export type DownloadTrackSource =
-  | { type: 'direct'; url: string; extension?: string; mimeType?: string | null; fetchHeaders?: Record<string, string> }
-  | { type: 'dash'; mimeType?: string | null; initUrl: string; segmentUrls: string[]; extension: string; fetchHeaders?: Record<string, string> };
+  | { type: 'direct'; url: string; extension?: string; mimeType?: string | null; fetchHeaders?: Record<string, string>; timeoutMs?: number }
+  | { type: 'dash'; mimeType?: string | null; initUrl: string; segmentUrls: string[]; extension: string; fetchHeaders?: Record<string, string>; timeoutMs?: number };
 
 class Hifi {
   private static readonly DEFAULT_HEADERS = { accept: 'application/vnd.api+json' };
