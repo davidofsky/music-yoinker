@@ -118,7 +118,8 @@ class QobuzDl {
   public static async searchAlbum(query: string): Promise<IAlbum[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get<{ success: boolean; data: QobuzSearchResults }>(`${sourceUrl}/api/get-music`, {
-        params: { q: query },
+        // offset is optional on some instances but strictly validated on others (e.g. arcod.xyz)
+        params: { q: query, offset: 0 },
         headers: this.getHeaders()
       });
       return (result.data.data?.albums?.items || []).map(a => this.mapAlbum(a));
@@ -128,7 +129,8 @@ class QobuzDl {
   public static async searchArtist(query: string): Promise<IArtist[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get<{ success: boolean; data: QobuzSearchResults }>(`${sourceUrl}/api/get-music`, {
-        params: { q: query },
+        // offset is optional on some instances but strictly validated on others (e.g. arcod.xyz)
+        params: { q: query, offset: 0 },
         headers: this.getHeaders()
       });
       return (result.data.data?.artists?.items || []).map(a => this.mapArtist(a));
@@ -138,7 +140,8 @@ class QobuzDl {
   public static async searchTrack(query: string): Promise<ITrack[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get<{ success: boolean; data: QobuzSearchResults }>(`${sourceUrl}/api/get-music`, {
-        params: { q: query },
+        // offset is optional on some instances but strictly validated on others (e.g. arcod.xyz)
+        params: { q: query, offset: 0 },
         headers: this.getHeaders()
       });
       return (result.data.data?.tracks?.items || []).map(t => this.mapTrack(t));
@@ -178,24 +181,58 @@ class QobuzDl {
     }, operationName);
   }
 
+  /**
+   * The stream endpoint is account-gated: the site authenticates against Supabase
+   * and passes that session token on to its own API.
+   */
+  private static session: { token: string; expiresAt: number } | null = null;
+
+  private static async getAccessToken(): Promise<string> {
+    if (this.session && Date.now() < this.session.expiresAt) return this.session.token;
+
+    if (!Config.QOBUZ_DL_EMAIL || !Config.QOBUZ_DL_PASSWORD) {
+      throw new Error('QOBUZ_DL_EMAIL and QOBUZ_DL_PASSWORD are not configured.');
+    }
+
+    const result = await axios.post<{ access_token: string; expires_in: number }>(
+      `${Config.QOBUZ_DL_SUPABASE_URL}/auth/v1/token?grant_type=password`,
+      { email: Config.QOBUZ_DL_EMAIL, password: Config.QOBUZ_DL_PASSWORD },
+      { headers: { apikey: Config.QOBUZ_DL_SUPABASE_KEY, 'Content-Type': 'application/json' }, timeout: 30000 }
+    );
+
+    const token = result.data?.access_token;
+    if (!token) throw new Error('[QobuzLogin] No access token returned');
+
+    // Renew a minute early so a token can't expire mid-download.
+    this.session = { token, expiresAt: Date.now() + ((result.data.expires_in || 3600) - 60) * 1000 };
+    return token;
+  }
+
   public static async downloadTrack(id: string): Promise<DownloadTrackSource> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get<{ success: boolean; data: { url: string } }>(`${sourceUrl}/api/download-music`, {
-        params: { track_id: id, quality: Config.QOBUZ_DL_QUALITY },
-        headers: this.getHeaders(),
-        timeout: 30000
-      });
-      const url = result.data.data?.url;
-      if (!url) throw new Error('[QobuzDownloadTrack] No URL returned from server');
-      return {
-        type: 'direct' as const,
-        url,
-        extension: '.flac',
-        fetchHeaders: {
-          'Origin': sourceUrl,
-          'Referer': `${sourceUrl}/`,
-        }
-      };
+      const token = await this.getAccessToken();
+      try {
+        const result = await axios.get<{ url: string }>(`${sourceUrl}/api/player/stream/${id}`, {
+          params: { quality: Config.QOBUZ_DL_QUALITY },
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 30000
+        });
+        const url = result.data?.url;
+        if (!url) throw new Error('[QobuzDownloadTrack] No URL returned from server');
+        return {
+          type: 'direct' as const,
+          url,
+          extension: '.flac',
+          fetchHeaders: {
+            'Origin': sourceUrl,
+            'Referer': `${sourceUrl}/`,
+          }
+        };
+      } catch (e) {
+        // Drop a rejected token so the next attempt logs in again.
+        if (axios.isAxiosError(e) && e.response?.status === 401) this.session = null;
+        throw e;
+      }
     }, 'QobuzDownloadTrack');
   }
 
