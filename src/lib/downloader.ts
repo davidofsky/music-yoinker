@@ -4,6 +4,7 @@ import axios, { AxiosError } from "axios";
 import path from 'path';
 import Tidal from "./tidal"
 import Lucida from './lucida';
+import Antra from './antra';
 import { broadcast, Topic } from '@/lib/broadcast';
 import { PegTheFile } from './pegger';
 import { DownloadTrackSource } from './hifi'
@@ -225,14 +226,34 @@ class Downloader {
     try {
       return await musicRepository.downloadTrack(track.id.toString(), track.source);
     } catch (e) {
-      // Try lucida api as a last resort (cause amazon search is a bit unreliable)
-      if (!Config.LUCIDA_API_URL) throw e;
-      logger.warn(`[Downloader] Could not resolve a download url for ${track.title}, falling back to Lucida:`, e);
+      if (!Config.LUCIDA_API_URL && !Config.ANTRA_API_URL) throw e;
+      logger.warn(`[Downloader] Could not resolve a download url for ${track.title}, falling back:`, e);
     }
 
+    if (Config.ANTRA_API_URL) {
+      try {
+        return await this.resolveAntraSource(track);
+      } catch (e) {
+        if (!Config.LUCIDA_API_URL) throw e;
+        logger.warn(`[Downloader] Antra failed for ${track.title}, falling back to Lucida:`, e);
+      }
+    }
+
+    // Lucida last (cause amazon search is a bit unreliable)
     const url = await new Lucida().getDownloadUrl(track.artist.name, track.title);
     // No extension: Lucida serves whatever the upstream store has, so the content-type decides.
     return { type: 'direct', url };
+  }
+
+  /** Antra resolves tidal urls only, so qobuz-sourced tracks can't use it. */
+  private async resolveAntraSource(track: ITrack): Promise<DownloadTrackSource> {
+    if (track.source === 'qobuz') {
+      throw new Error(`[Downloader] Antra needs a Tidal url, but ${track.title} came from Qobuz.`);
+    }
+
+    const trackUrl = track.url || `https://tidal.com/browse/track/${track.id}`; // incase url isn't set
+    const { url, headers } = await new Antra().getDownload(trackUrl);
+    return { type: 'direct', url, fetchHeaders: headers };
   }
 
   private async fetchPayload(urls: string[], fetchHeaders: Record<string, string>): Promise<{ payload: Buffer; contentType?: string }> {

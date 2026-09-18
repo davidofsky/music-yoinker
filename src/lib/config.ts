@@ -37,6 +37,18 @@ class Config {
     return process.env.LUCIDA_API_URL || '';
   }
 
+  static get ANTRA_API_URL(): string {
+    return process.env.ANTRA_API_URL || '';
+  }
+
+  static get ANTRA_USERNAME(): string {
+    return process.env.ANTRA_USERNAME || '';
+  }
+
+  static get ANTRA_PASSWORD(): string {
+    return process.env.ANTRA_PASSWORD || '';
+  }
+
   static get MUSIC_DIRECTORY(): string {
     return process.env.MUSIC_DIRECTORY || '';
   }
