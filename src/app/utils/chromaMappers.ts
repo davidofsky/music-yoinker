@@ -22,7 +22,8 @@ export const albumToChromaItem = (
     year: album.releaseDate.split("-")[0],
     title: `${album.title}`,
     borderColor: "#aaa",
-    gradient: `linear-gradient(145deg, ${album.vibrantColor || "#1f1f1f"}, #000000)`,
+    // No colour from the source: leave it unset and let ChromaGrid extract one from the artwork.
+    gradient: album.vibrantColor ? `linear-gradient(145deg, ${album.vibrantColor}, #000000)` : undefined,
     isDownloaded: album.isDownloaded,
     isDownloading,
     onClick: () => onOpen(album)

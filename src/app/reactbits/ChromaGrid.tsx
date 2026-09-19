@@ -1,8 +1,9 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { gsap } from 'gsap';
 import { FaCheckCircle, FaSpinner } from 'react-icons/fa';
 import './ChromaGrid.css';
+import { getVibrantColor } from '@/app/utils/vibrant';
 
 export interface ChromaItem {
   title: string;
@@ -49,6 +50,29 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
   const pos = useRef({ x: 0, y: 0 });
 
   const data = items;
+
+  // Items whose source had no colour arrive without a gradient; derive one from the artwork.
+  const [derivedColors, setDerivedColors] = useState<Record<string, string>>({});
+  const artworkNeedingColor = useMemo(
+    () => Array.from(new Set(items.filter(i => !i.gradient && i.image).map(i => i.image))),
+    [items]
+  );
+
+  useEffect(() => {
+    let active = true;
+    artworkNeedingColor.forEach(async (url) => {
+      const color = await getVibrantColor(url);
+      if (!active || !color) return;
+      setDerivedColors(prev => (prev[url] ? prev : { ...prev, [url]: color }));
+    });
+    return () => { active = false; };
+  }, [artworkNeedingColor]);
+
+  const gradientFor = (c: ChromaItem) => {
+    if (c.gradient) return c.gradient;
+    const color = derivedColors[c.image];
+    return `linear-gradient(145deg, ${color || '#1f1f1f'}, #000000)`;
+  };
 
   useEffect(() => {
     const el = rootRef.current;
@@ -122,7 +146,7 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
           style={
             {
               '--card-border': c.borderColor || 'transparent',
-              '--card-gradient': c.gradient,
+              '--card-gradient': gradientFor(c),
               cursor: 'pointer',
             } as React.CSSProperties
           }
