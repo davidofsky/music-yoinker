@@ -119,8 +119,25 @@ class QobuzDl {
   // do multiple searches so you get more results
   private static readonly SEARCH_PAGES = 3;
   private static readonly SEARCH_PAGE_SIZE = 10;
+  private static readonly SEARCH_CACHE_TTL_MS = 30_000;
+
+  // One response holds albums, tracks and artists, but searchAlbum/searchArtist/searchTrack each
+  // ask for it and the repository runs all three at once: nine identical requests per search,
+  // against a source that allows 40 a minute. Sharing the in-flight promise collapses them.
+  private static searchCache = new Map<string, { at: number; pages: Promise<QobuzSearchResults[]> }>();
+
   private static async searchPages(sourceUrl: string, query: string): Promise<QobuzSearchResults[]> {
-    return Promise.all(
+    const key = `${sourceUrl}|${query}`;
+    const now = Date.now();
+
+    for (const [k, v] of this.searchCache) {
+      if (now - v.at > this.SEARCH_CACHE_TTL_MS) this.searchCache.delete(k);
+    }
+
+    const cached = this.searchCache.get(key);
+    if (cached) return cached.pages;
+
+    const pages = Promise.all(
       Array.from({ length: this.SEARCH_PAGES }, async (_, page) => {
         const result = await axios.get<{ success: boolean; data: QobuzSearchResults }>(`${sourceUrl}/api/get-music`, {
           params: { q: query, offset: page * this.SEARCH_PAGE_SIZE },
@@ -129,6 +146,11 @@ class QobuzDl {
         return result.data.data;
       })
     );
+
+    // A failed search must not stay cached, or the retry replays the same rejection.
+    pages.catch(() => this.searchCache.delete(key));
+    this.searchCache.set(key, { at: now, pages });
+    return pages;
   }
 
   public static async searchAlbum(query: string): Promise<IAlbum[]> {
