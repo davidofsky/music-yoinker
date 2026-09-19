@@ -230,7 +230,7 @@ class Downloader {
       logger.warn(`[Downloader] Could not resolve a download url for ${track.title}, falling back to Lucida:`, e);
     }
 
-    const url = await new Lucida().getDownloadUrl(track.artist.name, track.title);
+    const url = await new Lucida().getDownloadUrl(track);
     // No extension: Lucida serves whatever the upstream store has, so the content-type decides.
     // Lucida sends nothing while it rips, so the fetch needs far longer than a direct download.
     return { type: 'direct', url, timeoutMs: Config.LUCIDA_DOWNLOAD_TIMEOUT_MS };
