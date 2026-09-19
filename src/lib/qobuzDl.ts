@@ -168,7 +168,7 @@ class QobuzDl {
   public static async searchArtistSingles(id: string): Promise<IAlbum[]> {
     // release_type value mirrors the verified 'album' one; unconfirmed against
     // the live Qobuz API since this provider isn't enabled in this environment.
-    return this.searchArtistReleases(id, 'single', 'QobuzSearchArtistSingles');
+    return this.searchArtistReleases(id, 'epSingle', 'QobuzSearchArtistSingles');
   }
 
   private static async searchArtistReleases(id: string, releaseType: string, operationName: string): Promise<IAlbum[]> {
