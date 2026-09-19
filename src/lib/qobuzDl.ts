@@ -115,36 +115,40 @@ class QobuzDl {
     throw new Error(`[${operationName}] All ${totalAttempts} attempts failed. Last error: ${(lastError as Error)?.message ?? String(lastError)}`);
   }
 
+ 
+  // do multiple searches so you get more results
+  private static readonly SEARCH_PAGES = 3;
+  private static readonly SEARCH_PAGE_SIZE = 10;
+  private static async searchPages(sourceUrl: string, query: string): Promise<QobuzSearchResults[]> {
+    return Promise.all(
+      Array.from({ length: this.SEARCH_PAGES }, async (_, page) => {
+        const result = await axios.get<{ success: boolean; data: QobuzSearchResults }>(`${sourceUrl}/api/get-music`, {
+          params: { q: query, offset: page * this.SEARCH_PAGE_SIZE },
+          headers: this.getHeaders()
+        });
+        return result.data.data;
+      })
+    );
+  }
+
   public static async searchAlbum(query: string): Promise<IAlbum[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get<{ success: boolean; data: QobuzSearchResults }>(`${sourceUrl}/api/get-music`, {
-        // offset is optional on some instances but strictly validated on others (e.g. arcod.xyz)
-        params: { q: query, offset: 0 },
-        headers: this.getHeaders()
-      });
-      return (result.data.data?.albums?.items || []).map(a => this.mapAlbum(a));
+      const pages = await this.searchPages(sourceUrl, query);
+      return pages.flatMap(p => p?.albums?.items || []).map(a => this.mapAlbum(a));
     }, 'QobuzSearchAlbum');
   }
 
   public static async searchArtist(query: string): Promise<IArtist[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get<{ success: boolean; data: QobuzSearchResults }>(`${sourceUrl}/api/get-music`, {
-        // offset is optional on some instances but strictly validated on others (e.g. arcod.xyz)
-        params: { q: query, offset: 0 },
-        headers: this.getHeaders()
-      });
-      return (result.data.data?.artists?.items || []).map(a => this.mapArtist(a));
+      const pages = await this.searchPages(sourceUrl, query);
+      return pages.flatMap(p => p?.artists?.items || []).map(a => this.mapArtist(a));
     }, 'QobuzSearchArtist');
   }
 
   public static async searchTrack(query: string): Promise<ITrack[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get<{ success: boolean; data: QobuzSearchResults }>(`${sourceUrl}/api/get-music`, {
-        // offset is optional on some instances but strictly validated on others (e.g. arcod.xyz)
-        params: { q: query, offset: 0 },
-        headers: this.getHeaders()
-      });
-      return (result.data.data?.tracks?.items || []).map(t => this.mapTrack(t));
+      const pages = await this.searchPages(sourceUrl, query);
+      return pages.flatMap(p => p?.tracks?.items || []).map(t => this.mapTrack(t));
     }, 'QobuzSearchTrack');
   }
 
