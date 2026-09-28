@@ -115,33 +115,62 @@ class QobuzDl {
     throw new Error(`[${operationName}] All ${totalAttempts} attempts failed. Last error: ${(lastError as Error)?.message ?? String(lastError)}`);
   }
 
+ 
+  // do multiple searches so you get more results
+  private static readonly SEARCH_PAGES = 3;
+  private static readonly SEARCH_PAGE_SIZE = 10;
+  private static readonly SEARCH_CACHE_TTL_MS = 30_000;
+
+  // One response holds albums, tracks and artists, but searchAlbum/searchArtist/searchTrack each
+  // ask for it and the repository runs all three at once: nine identical requests per search,
+  // against a source that allows 40 a minute. Sharing the in-flight promise collapses them.
+  private static searchCache = new Map<string, { at: number; pages: Promise<QobuzSearchResults[]> }>();
+
+  private static async searchPages(sourceUrl: string, query: string): Promise<QobuzSearchResults[]> {
+    const key = `${sourceUrl}|${query}`;
+    const now = Date.now();
+
+    for (const [k, v] of this.searchCache) {
+      if (now - v.at > this.SEARCH_CACHE_TTL_MS) this.searchCache.delete(k);
+    }
+
+    const cached = this.searchCache.get(key);
+    if (cached) return cached.pages;
+
+    const pages = Promise.all(
+      Array.from({ length: this.SEARCH_PAGES }, async (_, page) => {
+        const result = await axios.get<{ success: boolean; data: QobuzSearchResults }>(`${sourceUrl}/api/get-music`, {
+          params: { q: query, offset: page * this.SEARCH_PAGE_SIZE },
+          headers: this.getHeaders()
+        });
+        return result.data.data;
+      })
+    );
+
+    // A failed search must not stay cached, or the retry replays the same rejection.
+    pages.catch(() => this.searchCache.delete(key));
+    this.searchCache.set(key, { at: now, pages });
+    return pages;
+  }
+
   public static async searchAlbum(query: string): Promise<IAlbum[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get<{ success: boolean; data: QobuzSearchResults }>(`${sourceUrl}/api/get-music`, {
-        params: { q: query },
-        headers: this.getHeaders()
-      });
-      return (result.data.data?.albums?.items || []).map(a => this.mapAlbum(a));
+      const pages = await this.searchPages(sourceUrl, query);
+      return pages.flatMap(p => p?.albums?.items || []).map(a => this.mapAlbum(a));
     }, 'QobuzSearchAlbum');
   }
 
   public static async searchArtist(query: string): Promise<IArtist[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get<{ success: boolean; data: QobuzSearchResults }>(`${sourceUrl}/api/get-music`, {
-        params: { q: query },
-        headers: this.getHeaders()
-      });
-      return (result.data.data?.artists?.items || []).map(a => this.mapArtist(a));
+      const pages = await this.searchPages(sourceUrl, query);
+      return pages.flatMap(p => p?.artists?.items || []).map(a => this.mapArtist(a));
     }, 'QobuzSearchArtist');
   }
 
   public static async searchTrack(query: string): Promise<ITrack[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get<{ success: boolean; data: QobuzSearchResults }>(`${sourceUrl}/api/get-music`, {
-        params: { q: query },
-        headers: this.getHeaders()
-      });
-      return (result.data.data?.tracks?.items || []).map(t => this.mapTrack(t));
+      const pages = await this.searchPages(sourceUrl, query);
+      return pages.flatMap(p => p?.tracks?.items || []).map(t => this.mapTrack(t));
     }, 'QobuzSearchTrack');
   }
 
@@ -165,7 +194,7 @@ class QobuzDl {
   public static async searchArtistSingles(id: string): Promise<IAlbum[]> {
     // release_type value mirrors the verified 'album' one; unconfirmed against
     // the live Qobuz API since this provider isn't enabled in this environment.
-    return this.searchArtistReleases(id, 'single', 'QobuzSearchArtistSingles');
+    return this.searchArtistReleases(id, 'epSingle', 'QobuzSearchArtistSingles');
   }
 
   private static async searchArtistReleases(id: string, releaseType: string, operationName: string): Promise<IAlbum[]> {
@@ -178,24 +207,58 @@ class QobuzDl {
     }, operationName);
   }
 
+  /**
+   * The stream endpoint is account-gated: the site authenticates against Supabase
+   * and passes that session token on to its own API.
+   */
+  private static session: { token: string; expiresAt: number } | null = null;
+
+  private static async getAccessToken(): Promise<string> {
+    if (this.session && Date.now() < this.session.expiresAt) return this.session.token;
+
+    if (!Config.QOBUZ_DL_EMAIL || !Config.QOBUZ_DL_PASSWORD) {
+      throw new Error('QOBUZ_DL_EMAIL and QOBUZ_DL_PASSWORD are not configured.');
+    }
+
+    const result = await axios.post<{ access_token: string; expires_in: number }>(
+      `${Config.QOBUZ_DL_SUPABASE_URL}/auth/v1/token?grant_type=password`,
+      { email: Config.QOBUZ_DL_EMAIL, password: Config.QOBUZ_DL_PASSWORD },
+      { headers: { apikey: Config.QOBUZ_DL_SUPABASE_KEY, 'Content-Type': 'application/json' }, timeout: 30000 }
+    );
+
+    const token = result.data?.access_token;
+    if (!token) throw new Error('[QobuzLogin] No access token returned');
+
+    // Renew a minute early so a token can't expire mid-download.
+    this.session = { token, expiresAt: Date.now() + ((result.data.expires_in || 3600) - 60) * 1000 };
+    return token;
+  }
+
   public static async downloadTrack(id: string): Promise<DownloadTrackSource> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      const result = await axios.get<{ success: boolean; data: { url: string } }>(`${sourceUrl}/api/download-music`, {
-        params: { track_id: id, quality: Config.QOBUZ_DL_QUALITY },
-        headers: this.getHeaders(),
-        timeout: 30000
-      });
-      const url = result.data.data?.url;
-      if (!url) throw new Error('[QobuzDownloadTrack] No URL returned from server');
-      return {
-        type: 'direct' as const,
-        url,
-        extension: '.flac',
-        fetchHeaders: {
-          'Origin': sourceUrl,
-          'Referer': `${sourceUrl}/`,
-        }
-      };
+      const token = await this.getAccessToken();
+      try {
+        const result = await axios.get<{ url: string }>(`${sourceUrl}/api/player/stream/${id}`, {
+          params: { quality: Config.QOBUZ_DL_QUALITY },
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 30000
+        });
+        const url = result.data?.url;
+        if (!url) throw new Error('[QobuzDownloadTrack] No URL returned from server');
+        return {
+          type: 'direct' as const,
+          url,
+          extension: '.flac',
+          fetchHeaders: {
+            'Origin': sourceUrl,
+            'Referer': `${sourceUrl}/`,
+          }
+        };
+      } catch (e) {
+        // Drop a rejected token so the next attempt logs in again.
+        if (axios.isAxiosError(e) && e.response?.status === 401) this.session = null;
+        throw e;
+      }
     }, 'QobuzDownloadTrack');
   }
 

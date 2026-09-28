@@ -2,6 +2,11 @@ import dotenv from 'dotenv';
 
 dotenv.config({ path: new URL('../../.env', import.meta.url).pathname });
 
+// Public (publishable) Supabase anon key served in arcod.xyz's own frontend bundle: it
+// identifies the project, not a user. Only needed for another instance or a rotation.
+const ARCOD_SUPABASE_URL = 'https://fnlghyzwyoklfqyhqlav.supabase.co';
+const ARCOD_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZubGdoeXp3eW9rbGZxeWhxbGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMDExODAsImV4cCI6MjA4OTY3NzE4MH0.9J1-JK1jJYunBM6bF-_MLR5UvhDV4BibXordTOzH2_0';
+
 class Config {
 
   static get LOG_LEVEL(): string {
@@ -31,6 +36,22 @@ class Config {
   static get QOBUZ_DL_QUALITY(): string {
     const q = process.env.QOBUZ_DL_QUALITY || '27';
     return ['27', '7', '6', '5'].includes(q) ? q : '27';
+  }
+
+  static get QOBUZ_DL_EMAIL(): string {
+    return process.env.QOBUZ_DL_EMAIL || '';
+  }
+
+  static get QOBUZ_DL_PASSWORD(): string {
+    return process.env.QOBUZ_DL_PASSWORD || '';
+  }
+
+  static get QOBUZ_DL_SUPABASE_URL(): string {
+    return process.env.QOBUZ_DL_SUPABASE_URL || ARCOD_SUPABASE_URL;
+  }
+
+  static get QOBUZ_DL_SUPABASE_KEY(): string {
+    return process.env.QOBUZ_DL_SUPABASE_KEY || ARCOD_SUPABASE_ANON_KEY;
   }
 
   static get LUCIDA_API_URL(): string {

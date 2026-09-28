@@ -104,7 +104,7 @@ const Browser = () => {
       artist: track.artist.name,
       title: track.title,
       borderColor: "#aaa",
-      gradient: `linear-gradient(145deg, ${track.album.vibrantColor || "#1f1f1f"}, #000000)`,
+      gradient: track.album.vibrantColor ? `linear-gradient(145deg, ${track.album.vibrantColor}, #000000)` : undefined,
       isDownloaded: track.isDownloaded,
       isDownloading,
       onClick: (() => {
