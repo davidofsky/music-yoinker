@@ -310,7 +310,7 @@ class QobuzDl {
     const artwork = image?.large || image?.small || '';
     const albumTitle = t.album?.title || parentAlbum?.title || '';
     const albumId = t.album?.id || parentAlbum?.id || 0;
-    const albumArtist = parentAlbum?.artist?.name || t.performer?.name || '';
+    const albumArtist = parentAlbum?.artist?.name || t.album?.artist?.name || t.performer?.name || '';
     const releaseDate = parentAlbum?.release_date_original || '';
     return {
       id: t.id,
@@ -345,6 +345,7 @@ class QobuzDl {
         videoCover: null,
       },
       releaseDate,
+      albumArtist,
       artwork,
       isDownloaded: false,
       source: 'qobuz',
