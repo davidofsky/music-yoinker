@@ -45,4 +45,5 @@ export interface ITrack {
   isDownloaded: boolean;
   source?: 'tidal' | 'qobuz';
   releaseDate?: string;
+  albumArtist?: string;
 }

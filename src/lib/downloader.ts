@@ -109,7 +109,7 @@ class Downloader {
       logger.info(`Downloading track: ${track.title}`);
       const downloadSource: DownloadTrackSource = await this.resolveDownloadSource(track);
       const tidalAlbum = track.source === 'qobuz'
-        ? Promise.resolve({ albumArtist: track.artist.name, releaseDate: track.releaseDate || '', genres: [] as string[] })
+        ? Promise.resolve({ albumArtist: track.albumArtist || track.artist.name, releaseDate: track.releaseDate || '', genres: [] as string[] })
         : Tidal.getAlbum(track.album.id.toString()).catch(err => {
           logger.error(`[Downloader] Failed to fetch Tidal album metadata for genre tagging, continuing without genres:`, err);
           return { albumArtist: track.artist.name, releaseDate: track.releaseDate || '', genres: [] as string[] };
