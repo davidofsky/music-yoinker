@@ -208,35 +208,41 @@ class QobuzDl {
   }
 
   /**
-   * The stream endpoint is account-gated: the site authenticates against Supabase
-   * and passes that session token on to its own API.
+   * The stream endpoint is account-gated: the site's own /api/auth/login issues a
+   * session token (a JWT) that its API accepts. Sessions are kept per source.
    */
-  private static session: { token: string; expiresAt: number } | null = null;
+  private static sessions = new Map<string, { token: string; expiresAt: number }>();
 
-  private static async getAccessToken(): Promise<string> {
-    if (this.session && Date.now() < this.session.expiresAt) return this.session.token;
+  private static async getAccessToken(sourceUrl: string): Promise<string> {
+    const session = this.sessions.get(sourceUrl);
+    if (session && Date.now() < session.expiresAt) return session.token;
 
     if (!Config.QOBUZ_DL_EMAIL || !Config.QOBUZ_DL_PASSWORD) {
       throw new Error('QOBUZ_DL_EMAIL and QOBUZ_DL_PASSWORD are not configured.');
     }
 
-    const result = await axios.post<{ access_token: string; expires_in: number }>(
-      `${Config.QOBUZ_DL_SUPABASE_URL}/auth/v1/token?grant_type=password`,
+    const result = await axios.post<{ token: string }>(
+      `${sourceUrl}/api/auth/login`,
       { email: Config.QOBUZ_DL_EMAIL, password: Config.QOBUZ_DL_PASSWORD },
-      { headers: { apikey: Config.QOBUZ_DL_SUPABASE_KEY, 'Content-Type': 'application/json' }, timeout: 30000 }
+      { headers: { 'Content-Type': 'application/json' }, timeout: 30000 }
     );
 
-    const token = result.data?.access_token;
-    if (!token) throw new Error('[QobuzLogin] No access token returned');
+    const token = result.data?.token;
+    if (!token) throw new Error('[QobuzLogin] No token returned');
 
-    // Renew a minute early so a token can't expire mid-download.
-    this.session = { token, expiresAt: Date.now() + ((result.data.expires_in || 3600) - 60) * 1000 };
+    // Read the expiry from the JWT and renew a minute early so a token can't expire mid-download.
+    let exp = 0;
+    try {
+      exp = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString()).exp || 0;
+    } catch { /* not a JWT: fall back to an hour */ }
+    const expiresAt = (exp ? exp * 1000 : Date.now() + 3600 * 1000) - 60 * 1000;
+    this.sessions.set(sourceUrl, { token, expiresAt });
     return token;
   }
 
   public static async downloadTrack(id: string): Promise<DownloadTrackSource> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      const token = await this.getAccessToken();
+      const token = await this.getAccessToken(sourceUrl);
       try {
         const result = await axios.get<{ url: string }>(`${sourceUrl}/api/player/stream/${id}`, {
           params: { quality: Config.QOBUZ_DL_QUALITY },
@@ -256,7 +262,7 @@ class QobuzDl {
         };
       } catch (e) {
         // Drop a rejected token so the next attempt logs in again.
-        if (axios.isAxiosError(e) && e.response?.status === 401) this.session = null;
+        if (axios.isAxiosError(e) && e.response?.status === 401) this.sessions.delete(sourceUrl);
         throw e;
       }
     }, 'QobuzDownloadTrack');
