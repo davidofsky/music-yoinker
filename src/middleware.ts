@@ -11,7 +11,8 @@ export default authEnabled
       }
 
       const login = new URL("/login", req.nextUrl.origin);
-      login.searchParams.set("callbackUrl", req.nextUrl.href);
+      // A relative path, not a full URL: WAFs (e.g. ModSecurity) block URLs in query parameters.
+      login.searchParams.set("callbackUrl", req.nextUrl.pathname + req.nextUrl.search);
       return NextResponse.redirect(login);
     })
   : () => NextResponse.next();
