@@ -33,6 +33,25 @@ Copy the `example.env` file to `.env` and fill in the required environment varia
 - `TIDAL_CLIENT_SECRET`: Your TIDAL API client secret.
 - `HIFI_SOURCES`: Comma-separated list of hifi-api source URLs.
 
+#### Login (OIDC, optional)
+Without these variables, Music Yoinker runs without a login. Set `AUTH_OIDC_ISSUER` to require logging in through an OIDC provider (Pocket ID, Authentik, Keycloak, ...) on every page and API route; the other variables below are then required too. Register `<AUTH_URL>/api/auth/callback/oidc` as the redirect URI at your provider.
+- `AUTH_OIDC_ISSUER`: The issuer URL of your OIDC provider. Leave unset to disable the login.
+- `AUTH_OIDC_CLIENT_ID`: The client ID registered at your provider.
+- `AUTH_OIDC_CLIENT_SECRET`: The client secret registered at your provider.
+- `AUTH_URL`: The public URL Music Yoinker is reached on, e.g. `https://yoinker.example.com`.
+- `AUTH_SECRET`: A random secret that signs the session cookie. Generate one with `openssl rand -base64 32`.
+
+Only the `openid` scope is requested; no name, email or other profile information is stored.
+
+##### Testing the login locally
+`docker-compose.oidc.yml` runs a local [Pocket ID](https://pocket-id.org) for development, and `npm run setup-oidc` configures it and fills in the `AUTH_*` variables in your `.env`:
+```bash
+docker compose -f docker-compose.oidc.yml up -d
+npm run setup-oidc   # prints a one-time login code
+npm run dev
+```
+Then open http://localhost:3000, click "Log in" and enter the printed code. Run `npm run setup-oidc` again whenever you need a new code. This setup uses public keys and a test user, so never use it in production.
+
 #### Development
 - `MUSIC_DIRECTORY`: The path where music files will be stored outside the container. Make sure to map this to a persistent volume on your host machine.
 - `DATA_DIRECTORY`: The path where application data will be stored outside the container. Make sure to map this to a persistent volume on your host machine.

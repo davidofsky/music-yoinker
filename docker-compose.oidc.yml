@@ -1,0 +1,23 @@
+# Local Pocket ID for testing the OIDC login during development. NOT for production:
+# the keys below are public, and the setup script creates a test user anyone can log into.
+#
+#   docker compose -f docker-compose.oidc.yml up -d
+#   npm run setup-oidc
+#   npm run dev
+services:
+  pocket-id:
+    container_name: music-yoinker-pocket-id
+    image: ghcr.io/pocket-id/pocket-id:v2.19.2
+    ports:
+      - 127.0.0.1:1411:1411
+    restart: unless-stopped
+    environment:
+      - APP_URL=http://localhost:1411
+      - ENCRYPTION_KEY=5d5c2a4a8955a89bb328f5e6ce0a396d6bd1e7002bd52d42
+      # Admin API key used by scripts/setup-oidc.ts.
+      - STATIC_API_KEY=70fca68b2d1d8a95696f7a8083b0ac2ec742f4a20cce419a
+    volumes:
+      - pocket-id-data:/app/data
+
+volumes:
+  pocket-id-data:
