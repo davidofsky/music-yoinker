@@ -6,9 +6,7 @@ import Image from "next/image"
 import { Avatar, Button, Flex, Layout, Segmented, Typography } from "antd"
 import { FaArrowLeft, FaUser } from "react-icons/fa"
 import { LoadingCtx } from "@/app/context"
-import { useOpenAlbum } from "@/app/hooks/useOpenAlbum"
-import { albumToChromaItem, CHROMA_GRID_CONFIG, GRID_CONTENT_STYLE } from "@/app/utils/chromaMappers"
-import ChromaGrid from "@/app/reactbits/ChromaGrid"
+import MediaGrid, { GRID_CONTENT_STYLE } from "@/app/components/MediaGrid/MediaGrid"
 import { IAlbum } from "@/app/interfaces/album.interface"
 
 const { Content } = Layout
@@ -31,7 +29,6 @@ const ArtistPage = () => {
   const source = searchParams.get('source')
   const router = useRouter()
   const [, setLoading] = useContext(LoadingCtx)!
-  const { openAlbum } = useOpenAlbum()
   const [releaseType, setReleaseType] = useState<ReleaseType>('albums')
   const [releases, setReleases] = useState<Array<IAlbum>>([])
   const [name, setName] = useState('')
@@ -41,8 +38,8 @@ const ArtistPage = () => {
     getArtistReleases(releaseType);
   }, [params.id, source, releaseType])
 
-  const getArtistReleases = async (type: ReleaseType) => {
-    setLoading(true)
+  const getArtistReleases = async (type: ReleaseType, silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const result = await axios.get("/api/artist", {
         params: { id: params.id, type, source }
@@ -59,7 +56,7 @@ const ArtistPage = () => {
     } catch (error) {
       console.error("Failed to load artist:", error)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -114,12 +111,10 @@ const ArtistPage = () => {
         />
       </Flex>
       <Content style={GRID_CONTENT_STYLE}>
-        <ChromaGrid
-          items={releases.map(a => albumToChromaItem(a, openAlbum))}
-          damping={CHROMA_GRID_CONFIG.damping}
-          fadeOut={CHROMA_GRID_CONFIG.fadeOut}
-          ease={CHROMA_GRID_CONFIG.ease}
-          columns={CHROMA_GRID_CONFIG.columns}
+        <MediaGrid
+          kind="album"
+          items={releases}
+          onDownloadsFinished={() => getArtistReleases(releaseType, true)}
         />
       </Content>
     </div>
