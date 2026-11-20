@@ -3,6 +3,7 @@
   max-width: 1300px;
   flex-wrap: wrap;
   justify-content: center;
+  align-content: flex-start;
   gap: .5em;
   position: relative;
 }
@@ -60,6 +61,10 @@
   aspect-ratio: 1 / 1;
   overflow: hidden;
   border-radius: 0.5rem;
+}
+
+.chroma-img-inner img {
+  object-fit: cover;
 }
 
 .chroma-downloaded-badge {
