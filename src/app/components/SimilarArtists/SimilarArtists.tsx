@@ -13,7 +13,7 @@ const SimilarArtists = ({ artists }: { artists: DiscoverArtist[] }) => {
       <Typography.Title level={4} style={{ margin: 0, textAlign: 'center' }}>Artists you might like</Typography.Title>
       <Flex wrap justify="center" gap="small">
         {artists.map(a => (
-          <Tag
+          <Tag key={a.name}
             style={{ cursor: 'pointer', fontSize: 14, padding: '4px 10px', margin: 0 }}
             onClick={() => router.push(`/?${new URLSearchParams({ q: a.name, mode: 'artists' })}`)}
           >
