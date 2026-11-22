@@ -16,6 +16,8 @@ export const useOpenAlbum = () => {
       setOpenAlbum({
         Title: album.title,
         Artist: album.artists[0].name,
+        ArtistId: album.artists[0].id,
+        Source: album.source,
         Type: "Album",
         Tracks: result.data,
         ReleaseDate: album.releaseDate

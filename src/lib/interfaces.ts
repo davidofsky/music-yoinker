@@ -4,6 +4,8 @@ export interface DisplayItem {
   Type: "Album" | "Single"
   Title: string
   Artist: string
+  ArtistId?: number
+  Source?: 'tidal' | 'qobuz'
   Tracks: ITrack[]
   ReleaseDate?: string
 }

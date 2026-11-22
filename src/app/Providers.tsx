@@ -9,6 +9,8 @@ import AlbumViewer from "./components/AlbumViewer/AlbumViewer";
 import Queue from "./components/Queue/Queue";
 import Loading from "./components/Loading/Loading";
 import { QueueStateProvider } from "./hooks/useQueue";
+import { PlayerProvider } from "./hooks/usePlayer";
+import Player from "./components/Player/Player";
 
 const Providers = ({ children }: { children: ReactNode }) => {
   return (
@@ -27,10 +29,13 @@ const AppState = ({ children }: { children: ReactNode }) => {
       <OpenQueueCtx.Provider value={useState<boolean>(false)}>
         <LoadingCtx.Provider value={useState<boolean>(false)}>
           <QueueStateProvider>
-            <Loading />
-            <AlbumViewer />
-            <Queue />
-            {children}
+            <PlayerProvider>
+              <Loading />
+              <AlbumViewer />
+              <Queue />
+              {children}
+              <Player />
+            </PlayerProvider>
           </QueueStateProvider>
         </LoadingCtx.Provider>
       </OpenQueueCtx.Provider>

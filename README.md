@@ -52,6 +52,15 @@ npm run dev
 ```
 Then open http://localhost:3000, click "Log in" and enter the printed code. Run `npm run setup-oidc` again whenever you need a new code. This setup uses public keys and a test user, so never use it in production.
 
+#### Discovery (Last.fm, optional)
+The Discover page suggests tracks you haven't heard yet, based on what you listen to on Last.fm, and lets you play them in the browser before adding them to your library. See [docs/discovery.md](docs/discovery.md) for how it works.
+- `LASTFM_API_KEY`: API key from [last.fm/api](https://www.last.fm/api/account/create).
+- `LASTFM_API_SECRET`: The shared secret of that API account.
+
+When creating the API account, set its callback URL to `<your Yoinker URL>/api/lastfm/callback`.
+
+Any track, on any page, can also be played in the browser without downloading it. Previews stream at 320 kbps (AAC on Tidal, MP3 on Qobuz); downloads stay lossless.
+
 #### Development
 - `MUSIC_DIRECTORY`: The path where music files will be stored outside the container. Make sure to map this to a persistent volume on your host machine.
 - `DATA_DIRECTORY`: The path where application data will be stored outside the container. Make sure to map this to a persistent volume on your host machine.

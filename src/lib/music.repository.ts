@@ -43,6 +43,10 @@ class MusicRepository {
     return source ? this.getProvider(source).searchArtistSingles(id) : this.runAll(p => p.searchArtistSingles(id));
   }
   downloadTrack(id: string, source?: string | null) { return this.getProvider(source).downloadTrack(id); }
+  previewTrack(id: string, source?: string | null) { return this.getProvider(source).previewTrack(id); }
+  // Preference order: Tidal first, Qobuz is rate-limited.
+  get sources(): IProvider['source'][] { return this.providers.map(p => p.source); }
+  matchTrack(query: string, source: IProvider['source']): Promise<ITrack[]> { return this.getProvider(source).matchTrack(query); }
 }
 
 declare global {

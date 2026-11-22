@@ -10,4 +10,6 @@ export class QobuzProvider implements IProvider {
   searchArtistAlbums(id: string) { return QobuzDl.searchArtistAlbums(id); }
   searchArtistSingles(id: string) { return QobuzDl.searchArtistSingles(id); }
   downloadTrack(id: string) { return QobuzDl.downloadTrack(id); }
+  matchTrack(query: string) { return QobuzDl.searchTrack(query, 1); }
+  previewTrack(id: string) { return QobuzDl.downloadTrack(id, '5'); } // MP3 320
 }

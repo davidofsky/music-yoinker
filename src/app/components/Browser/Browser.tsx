@@ -1,7 +1,9 @@
 "use client"
 import { useContext, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Flex, Layout, Segmented, Typography, theme } from "antd";
+import { Flex, Layout, Segmented, theme } from "antd";
+import Logo from "../Logo/Logo";
+import DiscoverBanner from "../DiscoverBanner/DiscoverBanner";
 import SearchBar from "../SearchBar/SearchBar";
 import MediaGrid, { GRID_CONTENT_STYLE } from "../MediaGrid/MediaGrid";
 import { OpenQueueCtx, OpenAlbumCtx, LoadingCtx } from "@/app/context";
@@ -12,7 +14,6 @@ import { IAlbum } from "@/app/interfaces/album.interface";
 import { IArtist } from "@/app/interfaces/artist.interface";
 
 const { Header, Content } = Layout;
-const { Title } = Typography;
 const { useToken } = theme;
 
 export enum BrowseMode {
@@ -88,9 +89,7 @@ const Browser = () => {
     <Layout style={{ minHeight: '100vh', filter: (loading || openAlbum || openQueue) ? 'blur(8px)' : undefined }}>
       <Header style={{ height: 'auto', lineHeight: 'normal', borderBottom: `1px solid ${token.colorBorderSecondary}` }}>
         <Flex vertical align="center" gap="middle" style={{ padding: '24px 0' }}>
-          <Title style={{ margin: 0, fontFamily: 'var(--font-bbh-bogle)' }}>
-            YOINKER
-          </Title>
+          <Logo />
 
           <Flex wrap align="center" justify="center" gap="middle">
             <SearchBar
@@ -125,13 +124,14 @@ const Browser = () => {
       </Header>
 
       <Content style={GRID_CONTENT_STYLE}>
-        {browseMode === BrowseMode.Albums && (
+        {!searchParams.get('q') && <DiscoverBanner />}
+        {searchParams.get('q') && browseMode === BrowseMode.Albums && (
           <MediaGrid kind="album" items={albums} onDownloadsFinished={refreshResults} />
         )}
-        {browseMode === BrowseMode.Tracks && (
+        {searchParams.get('q') && browseMode === BrowseMode.Tracks && (
           <MediaGrid kind="track" items={tracks} onDownloadsFinished={refreshResults} />
         )}
-        {browseMode === BrowseMode.Artists && (
+        {searchParams.get('q') && browseMode === BrowseMode.Artists && (
           <MediaGrid kind="artist" items={artists} />
         )}
       </Content>

@@ -125,13 +125,13 @@ class Hifi {
     }, 'SearchAlbumTracks');
   }
 
-  public static async downloadTrack(id: string): Promise<DownloadTrackSource> {
+  public static async downloadTrack(id: string, quality: 'LOSSLESS' | 'HIGH' = 'LOSSLESS'): Promise<DownloadTrackSource> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const result = await axios.get(`${sourceUrl}/track/`, {
         headers: this.DEFAULT_HEADERS,
         params: {
           id,
-          quality: "LOSSLESS"
+          quality
         },
         timeout: 30000
       });

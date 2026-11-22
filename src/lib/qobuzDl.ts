@@ -126,8 +126,8 @@ class QobuzDl {
   // against a source that allows 40 a minute. Sharing the in-flight promise collapses them.
   private static searchCache = new Map<string, { at: number; pages: Promise<QobuzSearchResults[]> }>();
 
-  private static async searchPages(sourceUrl: string, query: string): Promise<QobuzSearchResults[]> {
-    const key = `${sourceUrl}|${query}`;
+  private static async searchPages(sourceUrl: string, query: string, pageCount = this.SEARCH_PAGES): Promise<QobuzSearchResults[]> {
+    const key = `${sourceUrl}|${pageCount}|${query}`;
     const now = Date.now();
 
     for (const [k, v] of this.searchCache) {
@@ -138,7 +138,7 @@ class QobuzDl {
     if (cached) return cached.pages;
 
     const pages = Promise.all(
-      Array.from({ length: this.SEARCH_PAGES }, async (_, page) => {
+      Array.from({ length: pageCount }, async (_, page) => {
         const result = await axios.get<{ success: boolean; data: QobuzSearchResults }>(`${sourceUrl}/api/get-music`, {
           params: { q: query, offset: page * this.SEARCH_PAGE_SIZE },
           headers: this.getHeaders()
@@ -167,9 +167,10 @@ class QobuzDl {
     }, 'QobuzSearchArtist');
   }
 
-  public static async searchTrack(query: string): Promise<ITrack[]> {
+  // pageCount 1 = a single request.
+  public static async searchTrack(query: string, pageCount = this.SEARCH_PAGES): Promise<ITrack[]> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
-      const pages = await this.searchPages(sourceUrl, query);
+      const pages = await this.searchPages(sourceUrl, query, pageCount);
       return pages.flatMap(p => p?.tracks?.items || []).map(t => this.mapTrack(t));
     }, 'QobuzSearchTrack');
   }
@@ -240,12 +241,12 @@ class QobuzDl {
     return token;
   }
 
-  public static async downloadTrack(id: string): Promise<DownloadTrackSource> {
+  public static async downloadTrack(id: string, quality = Config.QOBUZ_DL_QUALITY): Promise<DownloadTrackSource> {
     return this.retryWithSourceCycle(async (sourceUrl) => {
       const token = await this.getAccessToken(sourceUrl);
       try {
         const result = await axios.get<{ url: string }>(`${sourceUrl}/api/player/stream/${id}`, {
-          params: { quality: Config.QOBUZ_DL_QUALITY },
+          params: { quality },
           headers: { Authorization: `Bearer ${token}` },
           timeout: 30000
         });

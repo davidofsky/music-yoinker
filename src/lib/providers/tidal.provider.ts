@@ -10,4 +10,6 @@ export class TidalProvider implements IProvider {
   searchArtistAlbums(id: string) { return Hifi.searchArtistAlbums(id); }
   searchArtistSingles(id: string) { return Hifi.searchArtistSingles(id); }
   downloadTrack(id: string) { return Hifi.downloadTrack(id); }
+  matchTrack(query: string) { return Hifi.searchTrack(query); }
+  previewTrack(id: string) { return Hifi.downloadTrack(id, 'HIGH'); }
 }

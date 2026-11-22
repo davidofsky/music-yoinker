@@ -12,4 +12,8 @@ export interface IProvider {
   searchArtistAlbums(id: string): Promise<IAlbum[]>;
   searchArtistSingles(id: string): Promise<IAlbum[]>;
   downloadTrack(id: string): Promise<DownloadTrackSource>;
+  // One cheap search, for matching artist + title.
+  matchTrack(query: string): Promise<ITrack[]>;
+  // Lossy stream for in-browser playback.
+  previewTrack(id: string): Promise<DownloadTrackSource>;
 }

@@ -198,3 +198,42 @@
   opacity: 1;
   transition: opacity 0.25s ease;
 }
+
+.chroma-play-button {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background-color: #2e7758;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+
+.chroma-card:hover .chroma-play-button,
+.chroma-play-button:focus-visible,
+.chroma-play-button.is-playing {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.chroma-play-button:hover {
+  background-color: #3a946e;
+}
+
+/* No hover on touch screens */
+@media (hover: none) {
+  .chroma-play-button {
+    opacity: 1;
+    transform: none;
+  }
+}

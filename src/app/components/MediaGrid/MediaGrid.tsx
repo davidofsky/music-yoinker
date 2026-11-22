@@ -5,6 +5,7 @@ import ChromaGrid, { ChromaItem } from "@/app/reactbits/ChromaGrid";
 import { OpenAlbumCtx } from "@/app/context";
 import { useOpenAlbum } from "@/app/hooks/useOpenAlbum";
 import { useQueue } from "@/app/hooks/useQueue";
+import { useIsPlaying, usePlayer } from "@/app/hooks/usePlayer";
 import { IAlbum } from "@/app/interfaces/album.interface";
 import { ITrack } from "@/app/interfaces/track.interface";
 import { IArtist } from "@/app/interfaces/artist.interface";
@@ -31,7 +32,7 @@ const gradientFrom = (color?: string | null) =>
  */
 export type MediaGridProps =
   | { kind: 'album'; items: IAlbum[]; onDownloadsFinished: () => void }
-  | { kind: 'track'; items: ITrack[]; onDownloadsFinished: () => void }
+  | { kind: 'track'; items: ITrack[]; onDownloadsFinished: () => void; subtitles?: string[] }
   | { kind: 'artist'; items: IArtist[] };
 
 const MediaGrid = (props: MediaGridProps) => {
@@ -39,6 +40,8 @@ const MediaGrid = (props: MediaGridProps) => {
   const { openAlbum } = useOpenAlbum();
   const queue = useQueue();
   const router = useRouter();
+  const { play } = usePlayer();
+  const isPlaying = useIsPlaying();
 
   // Ids of the grid's items that currently have tracks in the download queue.
   const downloadingIds = useMemo(() => {
@@ -77,7 +80,7 @@ const MediaGrid = (props: MediaGridProps) => {
           onClick: () => openAlbum(album),
         }));
       case 'track':
-        return props.items.map(track => ({
+        return props.items.map((track, index) => ({
           image: track.artwork,
           title: track.title,
           artist: track.artist.name,
@@ -86,9 +89,14 @@ const MediaGrid = (props: MediaGridProps) => {
           gradient: gradientFrom(track.album?.vibrantColor),
           isDownloaded: track.isDownloaded,
           isDownloading: !track.isDownloaded && downloadingIds.has(track.id),
+          onPlay: () => play(track),
+          isPlaying: isPlaying(track),
+          location: props.subtitles?.[index],
           onClick: () => setOpenAlbum({
             Title: track.album.title,
             Artist: track.artist.name,
+            ArtistId: track.artist.id,
+            Source: track.source,
             Type: "Single",
             Tracks: [track],
             ReleaseDate: track.releaseDate,

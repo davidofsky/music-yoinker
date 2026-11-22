@@ -13,3 +13,14 @@ body {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+@media (max-width: 600px) {
+  .player-add-label {
+    display: none;
+  }
+}
+
+/* Keep floating buttons above the player bar */
+body .ant-float-btn.ant-float-btn {
+  bottom: calc(var(--ant-margin-xxl, 48px) + var(--player-height, 0px));
+}

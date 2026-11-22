@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { gsap } from 'gsap';
-import { FaCheckCircle, FaSpinner } from 'react-icons/fa';
+import { FaCheckCircle, FaPause, FaPlay, FaSpinner } from 'react-icons/fa';
 import './ChromaGrid.css';
 import { getVibrantColor } from '@/app/utils/vibrant';
 
@@ -18,6 +18,9 @@ export interface ChromaItem {
   onClick: () => void;
   isDownloaded?: boolean;
   isDownloading?: boolean;
+  // Shows a play button.
+  onPlay?: () => void;
+  isPlaying?: boolean;
 }
 
 export interface ChromaGridProps {
@@ -164,6 +167,16 @@ export const ChromaGrid: React.FC<ChromaGridProps> = ({
                 <FaSpinner className="chroma-downloading-icon" />
               </div>
             ) : null}
+            {c.onPlay && (
+              <button
+                type="button"
+                className={`chroma-play-button${c.isPlaying ? ' is-playing' : ''}`}
+                aria-label={c.isPlaying ? `Pause ${c.title}` : `Play ${c.title}`}
+                onClick={(e) => { e.stopPropagation(); c.onPlay!(); }}
+              >
+                {c.isPlaying ? <FaPause /> : <FaPlay />}
+              </button>
+            )}
           </div>
           <footer className="chroma-info">
             <h3 className="name">{c.title}</h3>

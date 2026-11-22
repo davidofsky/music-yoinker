@@ -1,14 +1,19 @@
-import { FaDownload } from 'react-icons/fa'
+import { FaDownload, FaPause, FaPlay } from 'react-icons/fa'
 import axios from "axios"
-import { Modal, Button, Typography, Listy } from "antd"
+import { Modal, Button, Flex, Typography, Listy } from "antd"
 import { OpenAlbumCtx } from "@/app/context"
 import { useContext, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useIsPlaying, usePlayer } from "@/app/hooks/usePlayer"
 
 const { Title, Text } = Typography
 
 const AlbumViewer = () => {
   const [openAlbum, setOpenAlbum] = useContext(OpenAlbumCtx)!
   const [isDownloading, setIsDownloading] = useState(false)
+  const { play } = usePlayer()
+  const isPlaying = useIsPlaying()
+  const router = useRouter()
 
   const closeAction = () => setOpenAlbum(null);
 
@@ -37,7 +42,20 @@ const AlbumViewer = () => {
           <Title level={4} style={{ margin: 0 }}>
             {openAlbum?.Title} {openAlbum?.ReleaseDate && `(${openAlbum.ReleaseDate.split("-")[0]})`}
           </Title>
-          <Text type="secondary">{openAlbum?.Artist}</Text>
+          {openAlbum?.ArtistId ? (
+            <Typography.Link
+              type="secondary"
+              onClick={() => {
+                const { ArtistId, Source } = openAlbum
+                closeAction()
+                router.push(Source ? `/artist/${ArtistId}?source=${Source}` : `/artist/${ArtistId}`)
+              }}
+            >
+              {openAlbum.Artist}
+            </Typography.Link>
+          ) : (
+            <Text type="secondary">{openAlbum?.Artist}</Text>
+          )}
         </>
       }
       footer={[
@@ -64,7 +82,16 @@ const AlbumViewer = () => {
           items={openAlbum?.Tracks ?? []}
           rowKey={(t) => t.id}
           itemRender={(t, i) => (
-            <div style={{ padding: '8px 0' }}>{i + 1}. {t.title}</div>
+            <Flex align="center" gap="small" style={{ padding: '4px 0' }}>
+              <Button
+                type="text"
+                shape="circle"
+                aria-label={isPlaying(t) ? `Pause ${t.title}` : `Play ${t.title}`}
+                icon={isPlaying(t) ? <FaPause /> : <FaPlay />}
+                onClick={() => play(t)}
+              />
+              <span>{i + 1}. {t.title}</span>
+            </Flex>
           )}
         />
       </div>

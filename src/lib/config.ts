@@ -45,6 +45,14 @@ class Config {
     return process.env.LUCIDA_API_URL || '';
   }
 
+  static get LASTFM_API_KEY(): string {
+    return process.env.LASTFM_API_KEY || '';
+  }
+
+  static get LASTFM_API_SECRET(): string {
+    return process.env.LASTFM_API_SECRET || '';
+  }
+
   static get MUSIC_DIRECTORY(): string {
     return process.env.MUSIC_DIRECTORY || '';
   }
